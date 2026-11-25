@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Yosemite Snow Trip</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* VOICE: a calm, trusted ranger at the trailhead — clear, warm, safety-first.
+   IDEA: an NPS field guide + trail sign: brown-and-white signage, granite and snow.
+   PICTURE: a snowy Valley scene band with Half Dome, then the working app (day, picks, map).
+   COLOUR and TYPE: snow white ground, sign brown #4a2e1f, pine #1f4d3a, alert red #d63c26; Barlow Condensed signage + Barlow.
+   LAYOUT: phone-first, sticky day switcher, bottom tab bar, cards in one column, two columns above 900px. */
+:root{color-scheme:light dark;--bg:light-dark(#f5f7f6,#0f1613);--card:light-dark(#ffffff,#18221e);--ink:light-dark(#18201c,#e8eee9);--mut:light-dark(#5b6762,#9aa9a1);--line:light-dark(#dfe5e2,#2a3832);--sign:light-dark(#4a2e1f,#c99a74);--pine:light-dark(#1f4d3a,#7fc5a2);--red:light-dark(#c8361f,#ff7a62);--amber:light-dark(#9a6200,#f3b84f);--ok:light-dark(#1d7a48,#6fd39b);--chip:light-dark(#eef2f0,#22302a)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html{scroll-padding-top:120px}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Barlow,system-ui,sans-serif;overflow-x:clip;padding-bottom:84px}
+h1,h2,h3{font-family:"Barlow Condensed",Barlow,sans-serif;line-height:1.05;margin:0;text-wrap:balance}
+h1{font-size:34px}h2{font-size:26px;margin:22px 0 10px}h3{font-size:20px}
+a{color:var(--pine)}
+.wrap{max-width:1100px;margin:0 auto;padding:0 14px}
+header.hero{position:relative;color:#fff;background:#24413a;overflow:hidden}
+header.hero svg{display:block;width:100%;height:150px}
+header .ttl{position:absolute;left:0;bottom:0;right:0;padding:30px 14px 10px;background:linear-gradient(transparent,rgba(20,32,28,.75));text-shadow:0 1px 4px rgba(0,0,0,.5)}
+header .ttl p{margin:2px 0 0;font-size:14px;opacity:.95}
+.daybar{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--line);padding:8px 0}
+.days{display:flex;gap:8px;overflow-x:auto}
+.days button{flex:1 0 auto;min-height:48px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:12px;padding:6px 12px;font:600 15px Barlow;cursor:pointer;text-align:center}
+.days button small{display:block;font-weight:400;color:var(--mut);font-size:13px}
+.days button[aria-pressed=true]{background:var(--sign);color:#fff;border-color:var(--sign)}
+.days button[aria-pressed=true] small{color:#f3e6dc}
+.tab{display:none;padding:12px 0 24px}.tab.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0}
+.grid{display:grid;gap:10px;grid-template-columns:minmax(0,1fr)}
+@media(min-width:900px){.grid.two{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.sp{justify-content:space-between}
+.mut{color:var(--mut)}.small{font-size:14px}
+.pill{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:2px 10px;font-size:13px;font-weight:600;white-space:nowrap}
+.open{background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok)}
+.limited{background:color-mix(in srgb,var(--amber) 18%,transparent);color:var(--amber)}
+.closed{background:color-mix(in srgb,var(--red) 15%,transparent);color:var(--red)}
+.tag{background:var(--chip);color:var(--mut);border-radius:8px;padding:1px 8px;font-size:13px;white-space:nowrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:8px 14px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:600 15px Barlow;cursor:pointer;text-decoration:none}
+.btn.pri{background:var(--pine);border-color:var(--pine);color:#fff}
+.btn.red{background:var(--red);border-color:var(--red);color:#fff}
+.btn:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+input,select,textarea{font:16px Barlow;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px;min-height:44px;width:100%}
+.alert{border-left:5px solid var(--red);background:color-mix(in srgb,var(--red) 8%,var(--card))}
+.warn{border-left:5px solid var(--amber)}
+.wx{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.wx div{background:var(--chip);border-radius:12px;padding:10px;text-align:center}
+.wx b{font:700 24px "Barlow Condensed"}
+.wx .sel{outline:2px solid var(--sign)}
+.big{font:700 44px/1 "Barlow Condensed"}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--card);border-top:1px solid var(--line);display:flex;overflow-x:auto;padding-bottom:env(safe-area-inset-bottom)}
+nav.tabs button{flex:1 0 64px;min-height:62px;border:0;background:none;color:var(--mut);font:600 12px Barlow;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+nav.tabs button svg{width:22px;height:22px}
+nav.tabs button[aria-selected=true]{color:var(--sign)}
+.place{display:grid;gap:6px}
+.place h3{font-size:21px}
+.fig{position:relative;background:light-dark(#e9efe9,#13201a);border-radius:14px;border:1px solid var(--line);overflow:hidden}
+.fig svg{display:block;width:100%;height:auto}
+.seg{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.seg button{min-height:40px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:4px 14px;font:600 14px Barlow;cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--pine);color:#fff;border-color:var(--pine)}
+ul.chk{list-style:none;margin:0;padding:0}
+ul.chk li{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line)}
+ul.chk input{width:22px;height:22px;min-height:22px;margin-top:2px;flex:none;accent-color:var(--pine)}
+ul.chk li.done span{text-decoration:line-through;color:var(--mut)}
+.bar{height:10px;background:var(--chip);border-radius:6px;overflow:hidden}.bar i{display:block;height:100%;background:var(--pine)}
+.plan li{display:grid;grid-template-columns:122px minmax(0,1fr) auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.plan ol{list-style:none;margin:0;padding:0}
+.time{font:700 18px "Barlow Condensed";white-space:nowrap}
+.chat{display:flex;flex-direction:column;gap:8px;max-height:58vh;overflow-y:auto;padding:4px}
+.msg{padding:10px 12px;border-radius:14px;max-width:88%;white-space:pre-wrap;overflow-wrap:anywhere}
+.msg.u{align-self:flex-end;background:var(--pine);color:#fff}
+.msg.a{align-self:flex-start;background:var(--chip)}
+.msg.t{align-self:center;font-size:13px;color:var(--mut);background:none;padding:2px}
+.bingo{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.bingo button{aspect-ratio:1;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);font:600 13px/1.15 Barlow;padding:4px;cursor:pointer}
+.bingo button[aria-pressed=true]{background:var(--sign);color:#fff}
+.modal{position:fixed;inset:0;z-index:50;background:rgba(10,15,12,.55);display:none;align-items:flex-end;justify-content:center}
+.modal.on{display:flex}
+.sheet{background:var(--bg);width:min(640px,100%);max-height:92vh;overflow-y:auto;border-radius:18px 18px 0 0;padding:18px 16px 28px}
+.opts{display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}
+.opts label{display:flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--card);min-height:48px;cursor:pointer}
+.opts input{width:20px;height:20px;min-height:20px;flex:none}
+details summary{cursor:pointer;font-weight:600;min-height:40px;display:flex;align-items:center}
+.sos{font:700 22px "Barlow Condensed"}
+@media(prefers-reduced-motion:no-preference){.snow circle{animation:fall 9s linear infinite}@keyframes fall{from{transform:translateY(-20px)}to{transform:translateY(170px)}}}
+</style>
+</head>
+<body>
+<header class="hero" aria-label="Yosemite Valley in snow">
+<svg viewBox="0 0 400 150" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7fa6b8"/><stop offset="1" stop-color="#d8e4e6"/></linearGradient>
+<linearGradient id="gr" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#9aa4a4"/><stop offset="1" stop-color="#5d6868"/></linearGradient>
+<g id="tree"><path d="M0-22 8-6H4L10 6H-10L-4-6H-8Z" fill="#1f4d3a"/><path d="M0-22 4-14-4-14Z" fill="#fff"/><rect x="-1.5" y="6" width="3" height="4" fill="#4a2e1f"/></g></defs>
+<rect width="400" height="150" fill="url(#sky)"/>
+<path d="M0 120 0 40Q20 30 40 34L70 100Z" fill="url(#gr)"/><path d="M0 40Q20 30 40 34L46 48Q22 42 0 52Z" fill="#fff"/>
+<path d="M230 130C250 60 268 38 300 34C318 33 326 50 330 70L340 130Z" fill="url(#gr)"/>
+<path d="M300 34C318 33 326 50 330 70C322 60 316 48 300 46C286 46 276 54 268 62C276 46 286 36 300 34Z" fill="#fff"/>
+<path d="M330 70 330 130 340 130Z" fill="#4c5656"/>
+<path d="M120 130C140 96 170 86 200 90 230 96 250 120 260 130Z" fill="#7b8686"/>
+<path d="M0 128Q100 112 200 122T400 118V150H0Z" fill="#fff"/>
+<g><use href="#tree" x="24" y="122"/><use href="#tree" x="46" y="128"/><use href="#tree" x="190" y="126"/><use href="#tree" x="212" y="130"/><use href="#tree" x="360" y="124"/><use href="#tree" x="380" y="130"/></g>
+<g class="snow" fill="#fff" opacity=".85"><circle cx="30" cy="10" r="1.6"/><circle cx="90" cy="0" r="1.2" style="animation-delay:-3s"/><circle cx="150" cy="20" r="1.8" style="animation-delay:-6s"/><circle cx="260" cy="5" r="1.3" style="animation-delay:-2s"/><circle cx="330" cy="0" r="1.7" style="animation-delay:-5s"/><circle cx="380" cy="15" r="1.2" style="animation-delay:-8s"/></g>
+</svg>
+<div class="ttl wrap"><h1>Yosemite Snow Trip</h1><p id="heroSub">Nov 25–27, 2026 · cabins · family guide</p></div>
+</header>
+
+<div class="daybar"><div class="wrap days" id="days" role="group" aria-label="Choose day"></div></div>
+
+<main class="wrap">
+<!-- TODAY -->
+<section class="tab on" id="t-today" aria-label="Today">
+  <div class="card alert" id="alerts"></div>
+  <div class="card" id="hereCard"><div class="row sp"><h3>Where are you now?</h3><span class="tag" id="hereTag"></span></div>
+ <select id="hereSel" aria-label="Your current spot" style="margin-top:8px"></select>
+ <form id="hereForm" class="row" style="flex-wrap:nowrap;margin-top:8px"><input id="hereIn" placeholder="Or paste coordinates / a Google Maps link" autocomplete="off"><button class="btn">Set</button></form>
+ <div class="row" style="margin-top:8px"><button type="button" class="btn" id="gpsBtn" style="flex:1">🛰️ Use my phone's GPS</button><button type="button" class="btn pri" id="shareHere" style="flex:1">📍 Share my location with Claude</button></div>
+ <p class="small mut" id="hereNote" style="margin-bottom:0">Picks, drive times and suggestions are measured from here. To find your exact spot: open <a href="https://www.google.com/maps" target="_blank" rel="noopener">Google Maps</a>, tap your blue dot, copy the numbers, and paste them above.</p></div>
+  <div class="grid two">
+    <div class="card"><div class="row sp"><h3>Weather · <span id="wxPlace">Yosemite Valley</span></h3><span class="tag">snapshot Nov 24</span></div>
+      <div class="row" style="margin:8px 0"><span class="big" id="wxHi"></span><div><div id="wxCond"></div><div class="mut small" id="wxLo"></div></div></div>
+      <div class="wx" id="wxStrip"></div>
+      <p class="small mut" id="wxNote"></p>
+      <div class="row"><a class="btn" target="_blank" rel="noopener" href="https://forecast.weather.gov/MapClick.php?lat=37.7456&lon=-119.5936">Live forecast (NWS)</a><a class="btn" target="_blank" rel="noopener" href="https://www.nps.gov/yose/planyourvisit/conditions.htm">Park conditions</a></div>
+    </div>
+    <div class="card"><h3>Daylight</h3>
+      <div class="row" style="margin:8px 0"><span class="big" id="dlLeft">—</span><span class="mut" id="dlLbl"></span></div>
+      <p class="small">Sunrise about <b>6:50 am</b> · sunset about <b>4:45 pm</b>. The Valley floor falls into shade earlier, and trails ice up quickly after sundown. Plan to be back at the car by 4:15.</p>
+      <h3 style="margin-top:8px">Right now</h3><p id="rightNow" class="small"></p>
+    </div>
+  </div>
+  <div class="row sp"><h2>Top picks for <span id="pickDay"></span></h2><button class="btn" id="redo">Change answers</button></div>
+  <div id="picks" class="grid two"></div>
+  <h2>Closed or limited on <span class="dname"></span></h2>
+  <div id="closedList"></div>
+</section>
+
+<!-- MAP -->
+<section class="tab" id="t-map" aria-label="Map">
+  <h2>Map</h2>
+  <div class="seg" id="mapSeg"><button data-m="park" aria-pressed="true">Whole park</button><button data-m="valley" aria-pressed="false">Yosemite Valley</button></div>
+  <div class="fig" id="mapFig"></div>
+  <div class="row small mut" style="margin:6px 0"><span class="pill open">● open</span><span class="pill limited">● limited</span><span class="pill closed">● closed</span><span>★ your cabin · <b style="color:#2f7de1">●</b> you are here · dashed red = closed road</span></div>
+  <div id="mapCard"></div>
+  <div class="card"><h3>Open in Google Maps</h3><p class="small mut">Google Maps uses your phone's GPS for live turn-by-turn directions. Download the Yosemite area for offline use in the Google Maps app before you go: cell signal is patchy in the park.</p>
+  <div class="row"><a class="btn pri" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=Yosemite+Valley+Welcome+Center">Yosemite Valley</a><a class="btn" target="_blank" rel="noopener" href="https://quickmap.dot.ca.gov/">Caltrans road map</a></div></div>
+  <h2>All places · <span class="dname"></span></h2>
+  <div class="seg" id="catSeg"></div>
+  <div id="allList" class="grid two"></div>
+</section>
+
+<!-- PLAN -->
+<section class="tab" id="t-plan" aria-label="Plan">
+  <div class="row sp"><h2>Plan for <span class="dname"></span></h2><div class="row"><button class="btn pri" id="autoPlan">Auto-plan this day</button><button class="btn" id="copyPlan">Copy plan</button></div></div>
+  <div class="card plan"><ol id="planList"></ol><p class="mut small" id="planEmpty">Nothing planned yet. Tap “Add to plan” on any place, use Auto-plan, or ask Claude.</p></div>
+  <div class="card"><h3>Trip notes</h3><textarea id="notes" rows="4" placeholder="Cabin code, check-in time, dinner reservation…"></textarea></div>
+</section>
+
+<!-- EAT -->
+<section class="tab" id="t-eat" aria-label="Eat">
+  <h2>Places to eat · <span class="dname"></span></h2>
+  <div class="card warn small">There is <b>no gas in Yosemite Valley</b> and winter dining is limited. Most families in cabins do breakfast at the cabin, lunch in the Valley, and dinner back at the cabin or a reserved Thanksgiving meal.</div>
+  <div id="eatList" class="grid two"></div>
+  <div class="card"><h3>Easy cabin meals</h3><ul class="small"><li>Slow-cooker chili or soup started in the morning: dinner is ready when you're back cold.</li><li>Thermos of hot cocoa or soup for the trail; warm drinks matter more than snacks in the cold.</li><li>Foil-pack quesadillas or grilled sandwiches: fast, kid-friendly.</li><li>Store groceries inside the cabin or in the bear locker, never in the car.</li></ul></div>
+</section>
+
+<!-- KIDS -->
+<section class="tab" id="t-kids" aria-label="Kids">
+  <h2>Fun for kids</h2>
+  <div id="kidList" class="grid two"></div>
+  <div class="card"><div class="row sp"><h3>Snow bingo</h3><button class="btn" id="bingoReset">New card</button></div><p class="small mut">Tap a square when you spot it. Four in a row wins hot cocoa.</p><div class="bingo" id="bingo"></div><p id="bingoWin" class="small" style="font-weight:600"></p></div>
+  <div class="card"><h3>Kid safety rules (read together)</h3><ul class="small"><li>Always stay where a grown-up can see you.</li><li>If you get lost: <b>hug a tree</b>, stay put, and blow your whistle 3 times.</li><li>Never walk on frozen rivers or lakes, and stay off wet rocks near waterfalls.</li><li>Never feed or go near animals, even squirrels or deer.</li><li>Tell a grown-up right away if your fingers, toes or ears hurt or go numb.</li></ul></div>
+</section>
+
+<!-- ASK CLAUDE -->
+<section class="tab" id="t-ask" aria-label="Ask Claude">
+  <h2>Ask Claude</h2>
+  <p class="small mut">Claude can see everything in this app: your answers, cabin area, the day, places and their status, the weather, your plan and pack list. It can add stops to your plan and tick items off.</p>
+  <div class="card"><div class="chat" id="chat" aria-live="polite"></div>
+  <div class="seg" id="sugg"></div>
+  <form id="askForm" class="row" style="flex-wrap:nowrap"><input id="askIn" placeholder="Ask anything about your trip…" autocomplete="off"><button class="btn pri" id="askBtn">Send</button></form>
+  <p class="small mut" id="askNote"></p></div>
+</section>
+
+<!-- SAFETY -->
+<section class="tab" id="t-safe" aria-label="Safety">
+  <h2>Snow safety</h2>
+  <div class="card alert"><div class="sos">Emergency: call or text 911</div><p class="small">Park information &amp; road/chain recording: <b>209-372-0200</b> (press 1, then 1). Yosemite Medical Clinic: <b>209-372-4637</b>. Cell signal is weak in many places, so text 911 if a call won't connect.</p>
+  <div class="row"><a class="btn red" href="tel:911">Call 911</a><a class="btn" href="tel:2093720200">Road info</a></div></div>
+  <div class="card"><h3>Family emergency card</h3><p class="small mut">Saved on this phone. Show it to a ranger if you need help.</p>
+  <textarea id="sosCard" rows="5" placeholder="Names & ages · cabin address · meeting point if separated · medical needs/allergies · car make, color, plate"></textarea></div>
+  <div id="safetyList"></div>
+</section>
+
+<!-- PACK -->
+<section class="tab" id="t-pack" aria-label="Pack">
+  <h2>Packing</h2>
+  <div class="seg" id="packSeg"><button data-p="pack" aria-pressed="true">Pack list</button><button data-p="gear" aria-pressed="false">Gear &amp; materials</button></div>
+  <div class="card"><div class="row sp"><b id="packCount"></b><button class="btn" id="packClear">Uncheck all</button></div><div class="bar" style="margin-top:8px"><i id="packBar"></i></div></div>
+  <div id="packList"></div>
+  <form id="packAdd" class="row" style="flex-wrap:nowrap;margin-top:10px"><input id="packIn" placeholder="Add your own item"><button class="btn pri">Add</button></form>
+</section>
+
+<section class="card small mut" style="margin-top:24px"><b>Sources &amp; accuracy.</b> Status was checked on Nov 24, 2026 from the NPS conditions page, Yosemite Guide, TravelYosemite and news reports. Conditions change fast in winter: check <a href="https://www.nps.gov/yose/planyourvisit/conditions.htm" target="_blank" rel="noopener">nps.gov/yose conditions</a> each morning. Drive times are estimates; Google Maps has the live ones.</section>
+</main>
+
+<nav class="tabs" role="tablist" id="tabs"></nav>
+
+<div class="modal" id="quiz" role="dialog" aria-modal="true" aria-labelledby="qT"><div class="sheet"><h2 id="qT" style="margin-top:0">Let's pick the best places for you</h2><p class="small mut">Six quick questions. You can change them any time.</p><form id="quizForm"></form></div></div>
+
+<script>
+{
+/* ---------- storage ---------- */
+const LS={get(k,d){try{const v=localStorage.getItem('yos_'+k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem('yos_'+k,JSON.stringify(v))}catch(e){}}};
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const $=id=>document.getElementById(id);
+
+/* ---------- data ---------- */
+const DAYS=[{k:'25',n:'Wed',d:'Nov 25',full:'Wednesday, Nov 25'},{k:'26',n:'Thu',d:'Thanksgiving',full:'Thursday, Nov 26 (Thanksgiving)'},{k:'27',n:'Fri',d:'Nov 27',full:'Friday, Nov 27'}];
+const WX={'24':{hi:48,lo:26,c:'Cloudy',p:10},'25':{hi:52,lo:28,c:'Clear',p:0},'26':{hi:58,lo:31,c:'Cloudy',p:10},'27':{hi:58,lo:33,c:'Cloudy',p:10},'28':{hi:57,lo:37,c:'Partly cloudy',p:10},'29':{hi:51,lo:38,c:'Drizzle',p:35},'1':{hi:41,lo:33,c:'Snow',p:85}};
+const BASES=[
+ {id:'curry',n:'Curry Village (Valley)',lat:37.7378,lng:-119.5717,el:4000},
+ {id:'yw',n:'Yosemite West',lat:37.6510,lng:-119.7010,el:6000},
+ {id:'wawona',n:'Wawona (Redwoods cabins)',lat:37.5420,lng:-119.6350,el:4000},
+ {id:'fish',n:'Fish Camp / Tenaya',lat:37.4790,lng:-119.6390,el:5000},
+ {id:'evergreen',n:'Evergreen Lodge / Hwy 120',lat:37.8130,lng:-119.8780,el:4500},
+ {id:'grove',n:'Groveland / Buck Meadows',lat:37.8270,lng:-120.2290,el:3000},
+ {id:'foresta',n:'Foresta / Big Oak Flat',lat:37.7000,lng:-119.7520,el:4300},
+ {id:'elportal',n:'El Portal',lat:37.6750,lng:-119.7840,el:2000},
+ {id:'mariposa',n:'Mariposa / Midpines',lat:37.4850,lng:-119.9660,el:2000},
+ {id:'oak',n:'Oakhurst / Bass Lake',lat:37.3280,lng:-119.6490,el:2300}];
+// status per day: o=open l=limited c=closed
+const P=[
+ {id:'tunnel',n:'Tunnel View',cat:'view',area:'Valley',lat:37.7158,lng:-119.6771,dur:.5,eff:0,kid:2,tags:['photo','views'],st:'ooo',d:'The classic view of El Capitan, Half Dome and Bridalveil Fall from a roadside pullout on Wawona Road. Best at sunset.',tip:'Lot is right off the road; the pavement can be icy in shade.'},
+ {id:'valleyview',n:'Valley View (Gates of the Valley)',cat:'view',area:'Valley',lat:37.7172,lng:-119.6625,dur:.3,eff:0,kid:2,tags:['photo','views'],st:'ooo',d:'Merced River in front of El Capitan and Cathedral Rocks. Easy pullout on Northside Drive as you leave the Valley.',tip:'Great reflection on calm mornings.'},
+ {id:'bridalveil',n:'Bridalveil Fall',cat:'walk',area:'Valley',lat:37.7166,lng:-119.6464,dur:.75,eff:1,kid:2,tags:['waterfalls','easy walk'],st:'ooo',d:'Short paved path (about 0.5 mi round trip) to the base of the fall. Flow is low in late fall, but ice forms on the rocks.',tip:'Spray zone freezes: microspikes help.'},
+ {id:'elcap',n:'El Capitan Meadow',cat:'view',area:'Valley',lat:37.7247,lng:-119.6326,dur:.5,eff:0,kid:2,tags:['views','photo'],st:'lll',d:'Look up 3,000 ft of granite; kids can try to spot climbers with binoculars.',tip:'The El Capitan Bridge trail is closed weekdays through December for bridge work, so expect a detour (Thanksgiving may differ; check signs).'},
+ {id:'loweryf',n:'Lower Yosemite Fall loop',cat:'walk',area:'Valley',lat:37.7468,lng:-119.5966,dur:1,eff:1,kid:3,tags:['waterfalls','easy walk','kids'],st:'ooo',d:'1-mile flat loop (shuttle stop 6) to the base of North America\'s tallest waterfall. Half of the loop is wheelchair accessible.',tip:'Icy in winter: walk the sunny east side first.'},
+ {id:'cooks',n:"Cook's Meadow loop",cat:'walk',area:'Valley',lat:37.7430,lng:-119.5920,dur:.75,eff:0,kid:3,tags:['easy walk','views','kids','photo'],st:'ooo',d:'1-mile boardwalk loop with Half Dome and Yosemite Falls in view. Flat, stroller friendly.',tip:'Frost on the meadow at sunrise is magic.'},
+ {id:'swinging',n:'Swinging Bridge',cat:'view',area:'Valley',lat:37.7400,lng:-119.5960,dur:.4,eff:0,kid:2,tags:['views','photo','picnic'],st:'ooo',d:'Bridge over the Merced with a reflection of Yosemite Falls. Picnic tables nearby.',tip:'Stay off the riverbank ice.'},
+ {id:'mirror',n:'Mirror Lake / Meadow',cat:'walk',area:'Valley',lat:37.7406,lng:-119.5568,dur:1.5,eff:1,kid:2,tags:['easy walk','views','kids'],st:'ooo',d:'2 mi round trip on a paved path from shuttle stop 17 to views under Half Dome. Lake is mostly dry in fall.',tip:'May be snowy or icy: bring traction.'},
+ {id:'vernal',n:'Vernal Fall Footbridge',cat:'hike',area:'Valley',lat:37.7322,lng:-119.5580,dur:1.5,eff:2,kid:1,tags:['waterfalls','hike'],st:'lll',d:'1.6 mi round trip, 400 ft gain from Happy Isles to a view of Vernal Fall.',tip:'The Mist Trail above the footbridge is closed in winter for ice; turn around at the bridge.'},
+ {id:'village',n:'Yosemite Village & Welcome Center',cat:'info',area:'Valley',lat:37.7488,lng:-119.5874,dur:1,eff:0,kid:2,tags:['history','kids','warm indoors'],st:'ooo',d:'Welcome Center and Exploration Center (9–5), Yosemite Museum (10–4), the Village Store, Degnan\'s Kitchen. Pick up Junior Ranger booklets here.',tip:'Holiday hours can change on Thanksgiving: check at the door.'},
+ {id:'ahwahnee',n:'The Ahwahnee (Great Lounge)',cat:'info',area:'Valley',lat:37.7461,lng:-119.5747,dur:.75,eff:0,kid:1,tags:['history','warm indoors','food'],st:'ooo',d:'Historic 1927 hotel: giant fireplaces, stained glass, hot cocoa at the bar. Thanksgiving dinner here on Nov 26.',tip:'Lobby is open to visitors; be quiet in guest areas.'},
+ {id:'rink',n:'Curry Village Ice Rink',cat:'kids',area:'Valley',lat:37.7378,lng:-119.5717,dur:2,eff:1,kid:3,tags:['kids','skating','fun'],st:'ooo',d:'Outdoor rink under Half Dome with fire pits. Daily sessions 12–2:30, 3:30–6 and 7–9:30 pm; weekends and holidays add 8:30–11 am. Skate rentals available.',tip:'Book online at travelyosemite.com or at the Curry Village Tour desk; weather permitting.',day:{'26':'Holiday: extra 8:30–11 am session'}},
+ {id:'happy',n:'Happy Isles & river walk',cat:'walk',area:'Valley',lat:37.7310,lng:-119.5590,dur:.75,eff:0,kid:2,tags:['easy walk','kids'],st:'ooo',d:'Flat trails along the Merced among boulders and pines (shuttle stop 16).',tip:'The Nature Center here is a summer-only facility.'},
+ {id:'tuolgrove',n:'Tuolumne Grove (giant sequoias)',cat:'hike',area:'Crane Flat',lat:37.7584,lng:-119.8065,dur:2,eff:2,kid:2,tags:['sequoias','hike','snow'],st:'ooo',d:'About 1 mi and 500 ft down an old road to a grove with a walk-through tree. Snowshoe-friendly in winter.',tip:'The walk back is all uphill: budget time and energy. Big Oak Flat Road reopened Nov 20; chains may be required.'},
+ {id:'merced',n:'Merced Grove',cat:'hike',area:'Crane Flat',lat:37.7498,lng:-119.8384,dur:2,eff:2,kid:1,tags:['sequoias','hike','quiet'],st:'ooo',d:'Quiet grove, 1.5 mi each way and 500 ft back up from Big Oak Flat Road.',tip:'Few people in winter: tell someone your plan.'},
+ {id:'craneplay',n:'Crane Flat snow play area',cat:'kids',area:'Crane Flat',lat:37.7553,lng:-119.7988,dur:1.5,eff:1,kid:3,tags:['kids','snow','sledding','fun'],st:'lll',d:'The park\'s designated snow play spot at about 6,200 ft. Bring your own plastic sled or saucer.',tip:'Only fun if there\'s enough snow: check on arrival. No sledding at Badger Pass.'},
+ {id:'hetch',n:'Hetch Hetchy (O\'Shaughnessy Dam)',cat:'view',area:'Hetch Hetchy',lat:37.9469,lng:-119.7877,dur:2.5,eff:1,kid:2,tags:['views','waterfalls','quiet','easy walk'],st:'lll',d:'Walk across the dam and through the tunnel toward Wapama Falls views. Far quieter than the Valley.',tip:'Road open sunrise to sunset only, and closed when it is snowing or snow is forecast overnight.'},
+ {id:'mariposa',n:'Mariposa Grove (on foot only)',cat:'hike',area:'Wawona',lat:37.5143,lng:-119.5998,dur:4,eff:3,kid:1,tags:['sequoias','hike','snow'],st:'lll',d:'The road and shuttle are closed for the season. You can hike about 2 mi each way (500 ft) from the Welcome Plaza to the grove, likely in snow or ice.',tip:'Long day for young kids. Microspikes or snowshoes recommended.'},
+ {id:'pioneer',n:'Wawona Pioneer History Center',cat:'info',area:'Wawona',lat:37.5363,lng:-119.6553,dur:.75,eff:0,kid:2,tags:['history','kids'],st:'ooo',d:'Historic cabins and a covered bridge to wander outside, near Wawona.',tip:'Buildings may be closed in winter; the grounds are open.'},
+ {id:'chilnualna',n:'Chilnualna Falls',cat:'hike',area:'Wawona',lat:37.5478,lng:-119.6339,dur:5,eff:3,kid:0,tags:['waterfalls','hike'],st:'lll',d:'Strenuous trail to the top of the falls; it reopened this year after the Dome Fire closure.',tip:'Lower cascades are a shorter, worthwhile turnaround.'},
+ {id:'glacier',n:'Glacier Point',cat:'view',area:'High country',lat:37.7307,lng:-119.5737,dur:0,eff:0,kid:0,tags:['views'],st:'ccc',d:'Road beyond Badger Pass is closed for the season (usually reopens late May/June).',tip:''},
+ {id:'badger',n:'Badger Pass Ski Area',cat:'kids',area:'High country',lat:37.6625,lng:-119.6634,dur:0,eff:0,kid:0,tags:['skiing'],st:'ccc',d:'Not open for skiing yet; it relies on natural snow (projected opening late December).',tip:''},
+ {id:'tioga',n:'Tioga Road · Tuolumne Meadows · Tenaya Lake · Olmsted Point',cat:'view',area:'High country',lat:37.8735,lng:-119.3581,dur:0,eff:0,kid:0,tags:['views'],st:'ccc',d:'Closed for the season due to snow; usually reopens late May or June.',tip:''},
+ {id:'halfdome',n:'Half Dome cables · Four Mile Trail',cat:'hike',area:'Valley',lat:37.7460,lng:-119.5332,dur:0,eff:0,kid:0,tags:['hike'],st:'ccc',d:'Half Dome cables are down for the season. Four Mile Trail is closed for hazardous conditions near Union Point.',tip:''},
+ {id:'mistupper',n:'Mist Trail above Vernal footbridge',cat:'hike',area:'Valley',lat:37.7270,lng:-119.5440,dur:0,eff:0,kid:0,tags:['hike'],st:'ccc',d:'Closed in winter: thick ice on the stone steps and falling icicles.',tip:''}
+];
+const EAT=[
+ {n:'Basecamp Eatery (Yosemite Valley Lodge)',lat:37.7426,lng:-119.5996,st:'ooo',h:'Breakfast 7–10:30 am, lunch & dinner 11 am–8 pm',d:'Food court with something for everyone. Offers a family-friendly Thanksgiving meal.',tags:['kids','quick']},
+ {n:"Degnan's Kitchen (Yosemite Village)",lat:37.7485,lng:-119.5865,st:'ooo',h:'7 am–6 pm',d:'Sandwiches, pizza slices, coffee. One of the few places with free Wi-Fi.',tags:['quick','wifi']},
+ {n:'Village Store (Yosemite Village)',lat:37.7471,lng:-119.5857,st:'ooo',h:'8 am–8 pm',d:'Groceries, firewood, snacks, cold-weather gear and gifts. Restock here for cabin meals.',tags:['groceries']},
+ {n:'The Ahwahnee Dining Room: Thanksgiving',lat:37.7461,lng:-119.5747,st:'lol',h:'Thu Nov 26, 12–8 pm · $165 adults, $82.50 children',d:'Grand Thanksgiving feast. Reserve: 888-413-8869. Regular dinner the other nights; reservations recommended.',tags:['holiday','reserve']},
+ {n:'The Ahwahnee Bar',lat:37.7462,lng:-119.5749,st:'ooo',h:'Open year-round',d:'Hot cocoa, drinks and snacks by the fire in the lobby.',tags:['cocoa','warm up']},
+ {n:'Mountain Room (Yosemite Valley Lodge)',lat:37.7430,lng:-119.6000,st:'ooo',h:'Dinner nightly',d:'Upscale-casual dinner with Yosemite Falls views. Call 209-372-1281 about Thanksgiving.',tags:['dinner','reserve']},
+ {n:'Village Grill',lat:37.7483,lng:-119.5870,st:'ccc',h:'Closed for the season',d:'',tags:[]},
+ {n:'Wawona Hotel Dining Room',lat:37.5367,lng:-119.6555,st:'ccc',h:'Closed indefinitely for renovation',d:'',tags:[]}
+];
+const KIDS=[
+ {n:'Ice skating at Curry Village',d:'Outdoor rink under Half Dome with fire pits for s\'mores. Thanksgiving adds a morning session.',id:'rink'},
+ {n:'Junior Ranger badge',d:'Ask for the Junior Ranger booklet at the Valley Welcome Center; kids complete activities and get sworn in by a ranger.',id:'village'},
+ {n:'Sledding and snowmen at Crane Flat',d:'The park\'s snow play area. Bring a plastic sled, dry gloves and a change of socks.',id:'craneplay'},
+ {n:'Walk through a giant sequoia',d:'The Tuolumne Grove has a tunnel tree kids can walk through.',id:'tuolgrove'},
+ {n:'Waterfall ice hunt',d:'Look for ice cones and frozen spray at Lower Yosemite Fall and Bridalveil Fall.',id:'loweryf'},
+ {n:'Climber spotting',d:'Use binoculars at El Capitan Meadow to find tiny climbers and their portaledges.',id:'elcap'},
+ {n:'Animal tracks detective',d:'Fresh snow shows tracks of deer, coyotes and squirrels. Take photos and look them up at the museum.',id:'cooks'},
+ {n:'Star gazing from the cabin',d:'Clear, moonlit nights; dress warm, turn off lights and let eyes adjust 15 minutes.',id:null}
+];
+const BINGO=['Animal tracks','Icicle','Steller\'s jay','Deer','Snowman','Half Dome','A climber','Pinecone','Frozen puddle','Waterfall','Shuttle bus','Ranger','Squirrel','Fire pit','Hot cocoa','Snowball'];
+const SAFE=[
+ {t:'Chains & winter driving',i:['Carry tire chains that fit your tires from November through March: when chain controls are on, every vehicle must have them in the car, including 4WD/AWD and rentals.','Speed limit under chain control is 25 mph. Fines for ignoring chain rules are steep (reported up to $5,000).','Hwy 140 (El Portal) needs chains least often; Hwy 41 and 120 need them more often.','Practice putting chains on at the cabin before you need them. Pack gloves and a kneeling pad.','Black ice forms on bridges, shaded curves and in the morning. Brake gently, no sudden steering.','No gas in Yosemite Valley. Keep the tank above half.','Hear chain status: 209-372-0200 (press 1, then 1).']},
+ {t:'Cold, hypothermia & frostbite',i:['Dress in layers: wicking base, fleece, waterproof shell. Avoid cotton.','Hypothermia warning signs, the “umbles”: stumbles, mumbles, fumbles, grumbles. Get them warm, dry and fed with warm sweet drinks, then seek help.','Frostbite: skin turns white or grayish-yellow, feels hard or numb. Warm gently and don\'t rub. Get medical care.','Kids lose heat fast. Change wet gloves and socks right away.','Drink water even when it\'s cold; dry air dehydrates you.']},
+ {t:'Icy trails & waterfalls',i:['Wear microspikes on icy paths, especially at waterfalls, bridges and shaded sections.','Stay on trails and behind railings. Wet rocks near water are deadly slippery.','Never walk on river or lake ice, and keep kids away from the Merced\'s edge.','Watch for falling ice under cliffs and icicles on warm afternoons.','Start back by 3:30 pm: it gets dark around 4:45 and trails refreeze.']},
+ {t:'Cabin safety',i:['Never use a grill, camp stove or generator inside: carbon monoxide kills.','Keep heaters clear of clothes and bedding, and keep vents and exhaust clear of snow.','Know where the exits, fire extinguisher and flashlight are on the first night.','In high winds, stay away from big trees. Curry Village tent cabins were closed during the Nov 18 storm for wind and tree risk.','Keep a headlamp by each bed in case the power goes out.']},
+ {t:'Bears & wildlife',i:['Bears are active in late fall. Store all food, coolers, toiletries and trash in bear lockers or inside your hard-sided cabin with doors and windows shut.','Never leave food, wrappers or car seats with crumbs in the car: bears break in.','Stay at least 50 yards from bears and 25 yards from other wildlife.','Drive slowly: bears are hit by cars every year in the park.']},
+ {t:'If someone gets lost',i:['S.T.O.P.: Stop, Think, Observe, Plan. Stay put; it\'s easier to find someone who isn\'t moving.','Give every kid a whistle: 3 blasts means help.','Agree on a meeting point at each stop (e.g. the shuttle stop sign).','Call or text 911. A text often gets through when a call won\'t.']}
+];
+const PACK={
+ pack:[['Clothing',['Wool or synthetic base layers (top & bottom)','Fleece or puffy mid layer','Insulated winter jacket','Waterproof shell / rain jacket','Snow pants (especially kids)','Warm hat that covers ears','Waterproof gloves + liner gloves','Extra gloves for kids','Wool socks, 2 pairs per day','Waterproof insulated boots','Neck gaiter or scarf','Sunglasses (snow glare)','Comfy cabin clothes & slippers','Swimsuit if the cabin has a hot tub']],
+ ['Day pack',['Water bottles + insulated thermos','High-energy snacks','Hand & toe warmers','First-aid kit','Sunscreen & lip balm','Headlamp per person','Whistle per kid','Emergency foil blanket','Phone + portable charger','Printed park map']],
+ ['Documents & money',['Park pass ($35 per vehicle, valid 7 days) or annual pass','Photo IDs','Cabin confirmation & door code','Dinner / ice rink reservations','Health insurance cards','Credit card + some cash']],
+ ['Kids',['Plastic sled or saucer','Binoculars','Small toys/games for the car','Junior Ranger pencil','Favorite stuffed animal','Kid-size microspikes']],
+ ['Food for the cabin',['Breakfast items','Hot cocoa, tea, coffee','Easy dinners (chili, pasta, soup)','Thanksgiving treats/pie','Marshmallows for s\'mores','Food storage bins (bear safe)']]],
+ gear:[['Car & road',['Tire chains that fit your tires (practice first)','Gloves & kneeling pad for chain install','Ice scraper & snow brush','Small snow shovel','Jumper cables','Full tank of gas before entering','Washer fluid rated for freezing','Blankets & extra jackets in the car','Water & food in the car (in case of delays)','Flashlight with fresh batteries','Car phone charger']],
+ ['Traction & trail',['Microspikes / Yaktrax for everyone','Trekking poles','Snowshoes (for groves)','Gaiters','Small daypacks','Waterproof bags for phones']],
+ ['Cabin materials',['Extra batteries','Power bank & multi-plug','Lighter / matches','Firestarter (if fireplace allowed)','Paper towels & trash bags','Dish soap & sponge','Ziplock bags','Board games / cards','Duct tape','Basic tool / multitool']],
+ ['Health & safety',['Prescription meds (extra days)','Kids\' fever/pain reliever','Moisturizer for dry skin','Blister care','Hand sanitizer','Carbon monoxide awareness (check cabin detector)']]]
+};
+
+/* ---------- state ---------- */
+const S={day:LS.get('day','25'),tab:'today',map:'park',cat:'all',pk:'pack',
+ prof:LS.get('prof',null),plan:LS.get('plan',{'25':[],'26':[],'27':[]}),check:LS.get('check',{}),custom:LS.get('custom',[]),bingo:LS.get('bingo',null),chat:[]};
+const base=()=>{const p=S.prof;if(!p)return BASES[0];if(p.base==='custom'&&p.lat)return{id:'custom',n:'Your location',lat:+p.lat,lng:+p.lng,el:+p.el||4000};return BASES.find(b=>b.id===p.base)||BASES[0]};
+const di=k=>DAYS.findIndex(d=>d.k===k);
+S.here=LS.get('here',null);const org=()=>S.here||base();
+function parseLL(v){v=String(v);let m=v.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/)||v.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)||v.match(/(-?\d{1,2}\.\d+)\s*[, ]\s*(-?\d{1,3}\.\d+)/);if(!m)return null;const a=+m[1],b=+m[2];return Math.abs(a)<=90&&Math.abs(b)<=180?{lat:a,lng:b}:null}
+
+const stat=(x,k=S.day)=>({o:'open',l:'limited',c:'closed'})[x.st[di(k)]];
+const SL={open:'Open',limited:'Open · limited',closed:'Closed'};
+const gm=(lat,lng)=>'https://www.google.com/maps/search/?api=1&query='+lat+','+lng;
+const gd=(lat,lng)=>'https://www.google.com/maps/dir/?api=1&destination='+lat+','+lng+'&travelmode=driving';
+function dist(a,b){const R=3959,t=Math.PI/180,dl=(b.lat-a.lat)*t,dn=(b.lng-a.lng)*t,x=Math.sin(dl/2)**2+Math.cos(a.lat*t)*Math.cos(b.lat*t)*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.sqrt(x))}
+function drive(p){const m=dist(org(),p)*1.45;const min=Math.round(m/28*60);return min<6?'nearby':(min<60?min+' min':(Math.floor(min/60)+' h '+(min%60)+' min'))+' drive'}
+function driveMin(p){return Math.round(dist(org(),p)*1.45/28*60)}
+function score(p){const pr=S.prof||{};if(stat(p)==='closed')return -99;let s=2;const ints=pr.ints||[];p.tags.forEach(t=>{if(ints.some(i=>t.includes(i)))s+=3});
+ const kids=(pr.who||[]).some(w=>w.startsWith('kid'));if(kids)s+=p.kid*1.5;const lvl={easy:0,mod:2,strong:3}[pr.hike||'mod'];if(p.eff>lvl)s-=4*(p.eff-lvl);
+ s-=driveMin(p)/30;if(stat(p)==='limited')s-=.5;if(p.id==='rink'&&S.day==='26')s+=1;return s}
+function save(){LS.set('plan',S.plan);LS.set('check',S.check);LS.set('custom',S.custom);LS.set('day',S.day)}
+
+/* ---------- render: days ---------- */
+function renderDays(){$('days').innerHTML=DAYS.map(d=>`<button data-d="${d.k}" aria-pressed="${d.k===S.day}">${d.n} ${d.k==='26'?'26':d.k}<small>${d.d}</small></button>`).join('');
+ document.querySelectorAll('.dname').forEach(e=>e.textContent=DAYS[di(S.day)].full)}
+$('days').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;S.day=b.dataset.d;save();renderAll()});
+
+/* ---------- tabs ---------- */
+const TABS=[['today','Today','M3 10h18M5 6h14M7 14h10M9 18h6'],['map','Map','M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14'],['plan','Plan','M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01'],['eat','Eat','M7 3v8a2 2 0 0 0 4 0V3M9 11v10M17 3c-2 2-2 6 0 8v10'],['kids','Kids','M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.6 7.1 18.2l.9-5.5-4-3.9L9.5 8z'],['ask','Claude','M4 5h16v11H8l-4 4z'],['safe','Safety','M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z'],['pack','Pack','M4 8h16v12H4zM9 8V5h6v3']];
+$('tabs').innerHTML=TABS.map(([k,n,d])=>`<button role="tab" data-t="${k}" aria-selected="${k==='today'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>${n}</button>`).join('');
+function go(t){S.tab=t;document.querySelectorAll('.tab').forEach(s=>s.classList.toggle('on',s.id==='t-'+t));document.querySelectorAll('nav.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.t===t));window.scrollTo({top:0});try{history.replaceState(null,'','#'+t)}catch(e){}}
+$('tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b)go(b.dataset.t)});
+
+/* ---------- place card ---------- */
+function placeCard(p,opts={}){const s=stat(p);const note=p.day&&p.day[S.day]?`<div class="small" style="color:var(--pine);font-weight:600">${esc(p.day[S.day])}</div>`:'';
+ const inPlan=(S.plan[S.day]||[]).some(x=>x.id===p.id);
+ return `<div class="card place" id="pc-${p.id}"><div class="row sp"><h3>${esc(p.n)}</h3><span class="pill ${s}">${SL[s]}</span></div>
+ <div class="row small mut"><span>${esc(p.area)}</span>${s!=='closed'?`<span>· ${drive(p)}</span>${p.dur?`<span>· ~${p.dur<1?Math.round(p.dur*60)+' min':p.dur+' h'} visit</span>`:''}`:''}</div>
+ <div class="small">${esc(p.d)}</div>${note}${p.tip?`<div class="small mut">Tip: ${esc(p.tip)}</div>`:''}
+ <div class="row">${p.tags.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>
+ ${s!=='closed'?`<div class="row"><a class="btn pri" target="_blank" rel="noopener" href="${gd(p.lat,p.lng)}">Directions</a><a class="btn" target="_blank" rel="noopener" href="${gm(p.lat,p.lng)}">Google Maps</a><button class="btn" data-add="${p.id}">${inPlan?'✓ In plan':'Add to plan'}</button></div>`:''}</div>`}
+document.addEventListener('click',e=>{const a=e.target.closest('[data-add]');if(!a)return;addPlan(S.day,a.dataset.add);renderAll()});
+
+/* ---------- today ---------- */
+function renderToday(){const b=base(),d=S.day,w=WX[d],adj=Math.round((b.el-4000)/1000*3.5);
+ $('heroSub').textContent='Nov 25–27 · near '+b.n.replace(/ \(.*\)/,'');
+ $('wxPlace').textContent=adj?b.n+' (est.)':'Yosemite Valley';
+ $('wxHi').textContent=(w.hi-adj)+'°';$('wxCond').textContent=w.c+' · '+w.p+'% precip';$('wxLo').textContent='Low '+(w.lo-adj)+'°F · '+DAYS[di(d)].full;
+ $('wxStrip').innerHTML=DAYS.map(x=>`<div class="${x.k===d?'sel':''}"><div class="small">${x.n}</div><b>${WX[x.k].hi-adj}°</b><div class="small mut">${WX[x.k].lo-adj}° · ${esc(WX[x.k].c)}</div></div>`).join('');
+ $('wxNote').textContent=(adj?'Adjusted about '+adj+'°F colder for your cabin\'s elevation (~'+b.el.toLocaleString()+' ft). ':'')+'Mostly dry for your stay; nights below freezing mean icy mornings. Heads-up: a storm with an 85% chance of snow is forecast for Tue Dec 1, after you leave. This is a Nov 24 snapshot: check the live forecast each morning.';
+ const al=['<b>Tioga Road and Glacier Point Road are closed for the season.</b> Glacier Point, Tuolumne Meadows and Badger Pass skiing aren\'t reachable.','Carry chains: they can be required on any road into the park, even with 4WD.'];
+ if(d==='26')al.push('<b>Thanksgiving:</b> extra ice-skating session 8:30–11 am. Ahwahnee Thanksgiving dinner 12–8 pm (reserve). Visitor services may keep holiday hours.');
+ if(S.prof&&S.prof.car==='none')al.unshift('<b>You said you don\'t have chains yet.</b> Buy or rent chains that fit your tires before driving up. See Safety.');
+ $('alerts').innerHTML='<h3>Heads up</h3><ul class="small" style="margin:6px 0 0;padding-left:18px">'+al.map(x=>'<li>'+x+'</li>').join('')+'</ul>';
+ $('pickDay').textContent=DAYS[di(d)].full;
+ const picks=P.filter(p=>stat(p)!=='closed').sort((a,b)=>score(b)-score(a)).slice(0,6);
+ $('picks').innerHTML=picks.map(p=>placeCard(p)).join('');
+ const cl=P.filter(p=>stat(p)!=='open').concat(EAT.filter(e=>e.st[di(d)]==='c').map(e=>({n:e.n,d:e.h,st:'ccc',area:'Food'})));
+ $('closedList').innerHTML=cl.map(p=>`<div class="card"><div class="row sp"><b>${esc(p.n)}</b><span class="pill ${stat(p)}">${SL[stat(p)]}</span></div><div class="small mut">${esc(stat(p)==='closed'?p.d:(p.tip||p.d))}</div></div>`).join('');
+ tick()}
+function tick(){const now=new Date(),pt=new Date(now.toLocaleString('en-US',{timeZone:'America/Los_Angeles'})),h=pt.getHours()+pt.getMinutes()/60,ss=16.75,sr=6.83;
+ let lbl,v;if(h<sr){v=((sr-h)|0)+'h '+Math.round((sr-h)%1*60)+'m';lbl='until sunrise'}else if(h<ss){v=((ss-h)|0)+'h '+Math.round((ss-h)%1*60)+'m';lbl='of daylight left'}else{v='Dark';lbl='after sunset'}
+ $('dlLeft').textContent=v;$('dlLbl').textContent=lbl;
+ const r=h<9?'Icy morning: wear traction. Great time for frosty Cook\'s Meadow or a calm reflection at Valley View.':h<12?'Best window for longer walks: Mirror Lake, Vernal Fall footbridge or a sequoia grove.':h<14.5?'Lunch in the Valley (Basecamp Eatery or Degnan\'s), then the ice rink or Lower Yosemite Fall.':h<16.8?'Head to Tunnel View for sunset light on El Capitan and Half Dome. Be back at the car before dark.':'Evening: ice rink night session (7–9:30 pm), hot cocoa at the Ahwahnee, or stars from the cabin. Drive slowly: black ice and deer.';
+ $('rightNow').textContent=r}
+setInterval(()=>{try{tick()}catch(e){}},60000);
+$('redo').addEventListener('click',()=>openQuiz());
+
+/* ---------- map ---------- */
+const ROADS=[
+ {c:0,p:[[37.5070,-119.6320],[37.537,-119.655],[37.585,-119.660],[37.645,-119.713],[37.690,-119.700],[37.7158,-119.6771],[37.721,-119.650]]},
+ {c:0,p:[[37.6700,-119.7800],[37.6870,-119.7300],[37.708,-119.700],[37.7172,-119.6660],[37.721,-119.650],[37.735,-119.615],[37.745,-119.590]]},
+ {c:0,p:[[37.7970,-119.8740],[37.7525,-119.8000],[37.735,-119.760],[37.718,-119.712],[37.708,-119.700]]},
+ {c:0,p:[[37.8130,-119.8780],[37.860,-119.840],[37.9000,-119.8350],[37.9469,-119.7877]]},
+ {c:1,p:[[37.7525,-119.8000],[37.840,-119.700],[37.860,-119.640],[37.8105,-119.4848],[37.8297,-119.4596],[37.8735,-119.3581]]},
+ {c:1,p:[[37.645,-119.713],[37.6625,-119.6634],[37.680,-119.620],[37.7307,-119.5737]]}];
+const MAPS={park:{w:400,h:440,la:[37.46,37.98],lo:[-119.92,-119.32]},valley:{w:400,h:200,la:[37.705,37.758],lo:[-119.695,-119.535]}};
+function proj(m,lat,lng){const M=MAPS[m];return[(lng-M.lo[0])/(M.lo[1]-M.lo[0])*M.w,(M.la[1]-lat)/(M.la[1]-M.la[0])*M.h]}
+function inMap(m,lat,lng){const M=MAPS[m];return lat>=M.la[0]&&lat<=M.la[1]&&lng>=M.lo[0]&&lng<=M.lo[1]}
+function renderMap(){const m=S.map,M=MAPS[m];let s=`<svg viewBox="0 0 ${M.w} ${M.h}" role="img" aria-label="Map of places">`;
+ if(m==='valley'){const v=[[37.716,-119.69],[37.722,-119.65],[37.735,-119.615],[37.745,-119.59],[37.742,-119.56],[37.733,-119.556]];s+=`<path d="M${v.map(q=>proj(m,...q).join(' ')).join('L')}" stroke="#7fb4d6" stroke-width="5" fill="none" stroke-linecap="round"/><text x="12" y="${M.h-10}" font-size="11" fill="currentColor" opacity=".6">Merced River</text>`}
+ else{const vl=proj(m,37.735,-119.62);s+=`<ellipse cx="${vl[0]}" cy="${vl[1]}" rx="26" ry="9" fill="#7fb4d6" opacity=".35"/><text x="${vl[0]-30}" y="${vl[1]+22}" font-size="11" fill="currentColor">Yosemite Valley</text>`}
+ ROADS.forEach(r=>{const pts=r.p.map(q=>proj(m,...q).map(n=>n.toFixed(1)).join(' ')).join('L');s+=`<path d="M${pts}" fill="none" stroke="${r.c?'#d63c26':'#8a6a55'}" stroke-width="${m==='valley'?4:3}" ${r.c?'stroke-dasharray="6 5"':''} stroke-linecap="round" opacity=".9"/>`});
+ const col={open:'#1d9a58',limited:'#d99400',closed:'#d63c26'};
+ P.forEach(p=>{if(!inMap(m,p.lat,p.lng))return;if(m==='park'&&p.area==='Valley'&&p.id!=='tunnel')return;const[x,y]=proj(m,p.lat,p.lng),st=stat(p);
+  s+=`<g data-pin="${p.id}" style="cursor:pointer" tabindex="0" role="button" aria-label="${esc(p.n)}, ${SL[st]}"><circle cx="${x}" cy="${y}" r="13" fill="transparent"/><circle cx="${x}" cy="${y}" r="6.5" fill="${col[st]}" stroke="#fff" stroke-width="2"/></g>`});
+ if(S.here&&inMap(m,S.here.lat,S.here.lng)){const[hx,hy]=proj(m,S.here.lat,S.here.lng);s+=`<circle cx="${hx}" cy="${hy}" r="11" fill="#2f7de1" opacity=".25"/><circle cx="${hx}" cy="${hy}" r="5.5" fill="#2f7de1" stroke="#fff" stroke-width="2"/>`}
+ const b=base();if(inMap(m,b.lat,b.lng)){const[x,y]=proj(m,b.lat,b.lng);s+=`<text x="${x}" y="${y+6}" text-anchor="middle" font-size="20" fill="#c99a00" stroke="#4a2e1f" stroke-width=".8">★</text>`}
+ if(m==='park'){const lb=[['Wawona',37.540,-119.66],['Crane Flat',37.755,-119.80],['Hetch Hetchy',37.95,-119.79],['Tuolumne Mdws (closed)',37.875,-119.36],['Glacier Pt (closed)',37.732,-119.574]];lb.forEach(([t,la,lo])=>{const[x,y]=proj(m,la,lo);s+=`<text x="${Math.min(x+9,M.w-90)}" y="${y-8}" font-size="11" fill="currentColor">${t}</text>`})}
+ s+='</svg>';$('mapFig').innerHTML=s;$('mapFig').style.color='var(--ink)'}
+$('mapFig').addEventListener('click',e=>{const g=e.target.closest('[data-pin]');if(!g)return;const p=P.find(x=>x.id===g.dataset.pin);$('mapCard').innerHTML=placeCard(p);$('mapCard').scrollIntoView({behavior:'smooth',block:'nearest'})});
+$('mapFig').addEventListener('keydown',e=>{if(e.key==='Enter'){const g=e.target.closest('[data-pin]');if(g)g.dispatchEvent(new MouseEvent('click',{bubbles:true}))}});
+$('mapSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;S.map=b.dataset.m;$('mapSeg').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));renderMap()});
+const CATS=[['all','All'],['view','Views'],['walk','Easy walks'],['hike','Hikes'],['kids','Kids'],['info','Indoors & history']];
+$('catSeg').innerHTML=CATS.map(([k,n])=>`<button data-c="${k}" aria-pressed="${k==='all'}">${n}</button>`).join('');
+$('catSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;S.cat=b.dataset.c;$('catSeg').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));renderList()});
+function renderList(){const L=P.filter(p=>S.cat==='all'||p.cat===S.cat).sort((a,b)=>(stat(a)==='closed')-(stat(b)==='closed')||driveMin(a)-driveMin(b));$('allList').innerHTML=L.map(p=>placeCard(p)).join('')}
+
+/* ---------- plan ---------- */
+function addPlan(day,id,time){const L=S.plan[day]=S.plan[day]||[];if(L.some(x=>x.id===id))return false;const p=P.find(x=>x.id===id);if(!p||stat(p,day)==='closed')return false;L.push({id,time:time||''});sortPlan(day);save();return true}
+function sortPlan(day){S.plan[day].sort((a,b)=>(a.time||'99').localeCompare(b.time||'99'))}
+function fmt(t){if(!t)return'—';const[h,m]=t.split(':').map(Number);return((h+11)%12+1)+':'+String(m).padStart(2,'0')+(h<12?'a':'p')}
+function renderPlan(){const L=S.plan[S.day]||[];$('planEmpty').style.display=L.length?'none':'block';
+ $('planList').innerHTML=L.map((x,i)=>{const p=P.find(q=>q.id===x.id);if(!p)return'';return`<li><input type="time" value="${esc(x.time)}" data-tm="${i}" aria-label="Time for ${esc(p.n)}" style="padding:6px;min-height:40px"><div><b>${esc(p.n)}</b><div class="small mut">${drive(p)} · <span class="pill ${stat(p)}" style="padding:0 6px">${SL[stat(p)]}</span></div></div><div class="row" style="flex-wrap:nowrap"><a class="btn" target="_blank" rel="noopener" href="${gd(p.lat,p.lng)}" aria-label="Directions">Go</a><button class="btn" data-rm="${i}" aria-label="Remove">✕</button></div></li>`}).join('')}
+$('planList').addEventListener('change',e=>{const i=e.target.dataset.tm;if(i==null)return;S.plan[S.day][i].time=e.target.value;sortPlan(S.day);save();renderPlan()});
+$('planList').addEventListener('click',e=>{const b=e.target.closest('[data-rm]');if(!b)return;S.plan[S.day].splice(+b.dataset.rm,1);save();renderAll()});
+function autoPlan(day){const pace=(S.prof&&S.prof.pace)||'bal',n={relax:3,bal:4,packed:6}[pace];const prevDay=S.day;S.day=day;
+ const others=Object.entries(S.plan).filter(([k])=>k!==day).flatMap(([,v])=>v.map(x=>x.id));
+ let c=P.filter(p=>stat(p,day)!=='closed'&&p.dur>0&&!['tunnel','valleyview'].includes(p.id)).map(p=>({p,s:score(p)-(others.includes(p.id)?3:0)})).sort((a,b)=>b.s-a.s).slice(0,n).map(x=>x.p);
+ const all=P.filter(p=>stat(p,day)!=='closed'&&p.dur>0&&!['tunnel','valleyview'].includes(p.id)).map(p=>({p,s:score(p)-(others.includes(p.id)?3:0)})).sort((a,b)=>b.s-a.s);
+ const area=all[0]?all[0].p.area:'Valley';c=all.filter(x=>x.p.area===area).slice(0,n).map(x=>x.p);
+ if(c.length<n)c=c.concat(all.filter(x=>x.p.area!==area&&c[0]&&dist(c[0],x.p)<12).slice(0,n-c.length).map(x=>x.p));
+ c.sort((a,b)=>a.lng-b.lng);
+ let t=9.5;const out=[];c.forEach(p=>{if(t>15.5)return;if(t>=12&&t<13&&!out.lunch){out.lunch=1;t+=1}out.push({id:p.id,time:String(Math.floor(t)).padStart(2,'0')+':'+(t%1>=.5?'30':'00')});t+=Math.max(.5,Math.ceil((p.dur+0.5)*2)/2)});
+ out.push({id:pace==='relax'?'valleyview':'tunnel',time:'16:00'});S.plan[day]=out.slice(0,out.length);S.day=prevDay;save();return out}
+$('autoPlan').addEventListener('click',()=>{autoPlan(S.day);renderAll()});
+$('copyPlan').addEventListener('click',async()=>{const L=S.plan[S.day]||[];const txt='Yosemite plan · '+DAYS[di(S.day)].full+'\n'+L.map(x=>{const p=P.find(q=>q.id===x.id);return fmt(x.time)+'  '+p.n+'  '+gm(p.lat,p.lng)}).join('\n');try{await navigator.clipboard.writeText(txt);$('copyPlan').textContent='Copied ✓'}catch(e){$('copyPlan').textContent='Copy blocked'}setTimeout(()=>$('copyPlan').textContent='Copy plan',2000)});
+$('notes').value=LS.get('notes','');$('notes').addEventListener('input',e=>LS.set('notes',e.target.value));
+$('sosCard').value=LS.get('sos','');$('sosCard').addEventListener('input',e=>LS.set('sos',e.target.value));
+
+/* ---------- eat / kids / safety ---------- */
+function renderEat(){$('eatList').innerHTML=EAT.map(e=>{const s=stat(e);return`<div class="card place"><div class="row sp"><h3>${esc(e.n)}</h3><span class="pill ${s}">${SL[s]}</span></div><div class="small"><b>${esc(e.h)}</b></div>${e.d?`<div class="small">${esc(e.d)}</div>`:''}<div class="row">${e.tags.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>${s!=='closed'?`<div class="row"><a class="btn pri" target="_blank" rel="noopener" href="${gd(e.lat,e.lng)}">Directions</a><span class="small mut">${drive(e)}</span></div>`:''}</div>`}).join('')+
+ (S.day==='26'?'':'<div class="card small mut">The Ahwahnee Thanksgiving dinner is on Thursday only. Switch to Thu to see it highlighted.</div>')}
+function renderKids(){$('kidList').innerHTML=KIDS.map(k=>{const p=k.id&&P.find(x=>x.id===k.id);const s=p?stat(p):'open';return`<div class="card place"><div class="row sp"><h3>${esc(k.n)}</h3>${p?`<span class="pill ${s}">${SL[s]}</span>`:''}</div><div class="small">${esc(k.d)}</div>${p&&s!=='closed'?`<div class="row"><a class="btn" target="_blank" rel="noopener" href="${gd(p.lat,p.lng)}">Directions</a><button class="btn" data-add="${p.id}">Add to plan</button></div>`:''}</div>`}).join('');
+ if(!S.bingo)newBingo();$('bingo').innerHTML=S.bingo.cells.map((c,i)=>`<button data-b="${i}" aria-pressed="${S.bingo.on.includes(i)}">${esc(c)}</button>`).join('');checkBingo()}
+function newBingo(){const a=BINGO.slice().sort(()=>Math.random()-.5);S.bingo={cells:a,on:[]};LS.set('bingo',S.bingo)}
+function checkBingo(){const on=S.bingo.on,L=[];for(let i=0;i<4;i++){L.push([0,1,2,3].map(j=>i*4+j));L.push([0,1,2,3].map(j=>j*4+i))}L.push([0,5,10,15],[3,6,9,12]);$('bingoWin').textContent=L.some(l=>l.every(x=>on.includes(x)))?'BINGO! Hot cocoa time ☕':on.length+' of 16 spotted'}
+$('bingo').addEventListener('click',e=>{const b=e.target.closest('[data-b]');if(!b)return;const i=+b.dataset.b,on=S.bingo.on;on.includes(i)?on.splice(on.indexOf(i),1):on.push(i);LS.set('bingo',S.bingo);renderKids()});
+$('bingoReset').addEventListener('click',()=>{newBingo();renderKids()});
+$('safetyList').innerHTML=SAFE.map((s,i)=>`<details class="card" ${i<2?'open':''}><summary><h3>${esc(s.t)}</h3></summary><ul class="small" style="padding-left:18px">${s.i.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></details>`).join('');
+
+/* ---------- pack ---------- */
+function packItems(){return PACK[S.pk].map(([g,a])=>[g,a]).concat(S.pk==='pack'&&S.custom.length?[['My items',S.custom]]:[])}
+function renderPack(){const G=packItems();let all=0,done=0;
+ $('packList').innerHTML=G.map(([g,a])=>`<div class="card"><h3>${esc(g)}</h3><ul class="chk">${a.map(t=>{const k=S.pk+':'+t,c=!!S.check[k];all++;if(c)done++;return`<li class="${c?'done':''}"><input type="checkbox" data-k="${esc(k)}" ${c?'checked':''} id="ck-${all}-${S.pk}"><label for="ck-${all}-${S.pk}"><span>${esc(t)}</span></label></li>`}).join('')}</ul></div>`).join('');
+ $('packCount').textContent=done+' of '+all+' packed';$('packBar').style.width=(all?done/all*100:0)+'%'}
+$('packList').addEventListener('change',e=>{const k=e.target.dataset.k;if(!k)return;S.check[k]=e.target.checked;save();renderPack()});
+$('packSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;S.pk=b.dataset.p;$('packSeg').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));$('packAdd').style.display=S.pk==='pack'?'flex':'none';renderPack()});
+$('packClear').addEventListener('click',()=>{Object.keys(S.check).forEach(k=>{if(k.startsWith(S.pk+':'))delete S.check[k]});save();renderPack()});
+$('packAdd').addEventListener('submit',e=>{e.preventDefault();const v=$('packIn').value.trim();if(v&&!S.custom.includes(v)){S.custom.push(v);save()}$('packIn').value='';renderPack()});
+
+/* ---------- quiz ---------- */
+const Q=[
+ {k:'base',t:'1. Where is your cabin?',type:'radio',o:BASES.map(b=>[b.id,b.n]).concat([['custom','Somewhere else (enter below)']])},
+ {k:'who',t:'2. Who\'s coming?',type:'checkbox',o:[['kidsmall','Kids under 5'],['kidbig','Kids 5–12'],['teen','Teens'],['adult','Adults'],['senior','Seniors / limited mobility']]},
+ {k:'hike',t:'3. How much walking feels good?',type:'radio',o:[['easy','Short, flat strolls'],['mod','2–4 miles, some hills'],['strong','Long or steep is fine']]},
+ {k:'ints',t:'4. What do you love?',type:'checkbox',o:[['views','Big views'],['photo','Photography'],['waterfalls','Waterfalls'],['sequoias','Giant sequoias'],['snow','Snow play'],['skating','Ice skating'],['history','History & indoors'],['quiet','Quiet spots'],['food','Good food']]},
+ {k:'car',t:'5. Your car in snow?',type:'radio',o:[['awd','4WD/AWD + chains'],['chains','2WD with chains'],['none','No chains yet']]},
+ {k:'pace',t:'6. Pace?',type:'radio',o:[['relax','Relaxed'],['bal','Balanced'],['packed','See as much as possible']]}];
+function openQuiz(){const p=S.prof||{base:'curry',who:['adult','kidbig'],hike:'mod',ints:['views','waterfalls','snow'],car:'chains',pace:'bal'};
+ $('quizForm').innerHTML=Q.map(q=>`<fieldset style="border:0;padding:0;margin:0 0 16px"><legend style="font-weight:600;margin-bottom:8px">${q.t}</legend><div class="opts">${q.o.map(([v,n])=>`<label><input type="${q.type}" name="${q.k}" value="${v}" ${(Array.isArray(p[q.k])?p[q.k].includes(v):p[q.k]===v)?'checked':''}>${esc(n)}</label>`).join('')}</div>${q.k==='base'?`<div class="row" style="margin-top:8px;flex-wrap:nowrap"><input name="ll" placeholder="Paste coordinates, e.g. 37.65, -119.70" value="${p.lat?esc(p.lat+', '+p.lng):''}"></div><p class="small mut">Tip: in Google Maps, long-press your cabin and copy the numbers shown.</p>`:''}</fieldset>`).join('')+'<button class="btn pri" style="width:100%">Show my best places</button>';
+ $('quiz').classList.add('on')}
+$('quizForm').addEventListener('submit',e=>{e.preventDefault();const f=new FormData(e.target),p={};Q.forEach(q=>{p[q.k]=q.type==='checkbox'?f.getAll(q.k):f.get(q.k)});
+ const ll=(f.get('ll')||'').match(/(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);if(ll){p.lat=+ll[1];p.lng=+ll[2];if(p.base!=='custom')p.base='custom'}else if(p.base==='custom'){p.base='curry'}
+ S.prof=p;LS.set('prof',p);$('quiz').classList.remove('on');renderAll()});
+
+/* ---------- Claude ---------- */
+let sample=null,busy=false;
+const SUGG=['What should we do tomorrow morning?','Is it safe to drive to the Tuolumne Grove?','Plan Thanksgiving day for us','What kids activities are open on Friday?','What should we pack for a 5-year-old?'];
+$('sugg').innerHTML=SUGG.map(s=>`<button type="button" data-s="${esc(s)}" aria-pressed="false">${esc(s)}</button>`).join('');
+$('sugg').addEventListener('click',e=>{const b=e.target.closest('[data-s]');if(b){$('askIn').value=b.dataset.s;$('askForm').requestSubmit()}});
+function bubble(cls,txt){const d=document.createElement('div');d.className='msg '+cls;d.textContent=txt;$('chat').appendChild(d);$('chat').scrollTop=1e6;return d}
+bubble('a','Hi! I\'m Claude, your Yosemite trip helper. Ask me what to do, where to eat, whether a road is safe, or to plan a day.');
+function placeBrief(p,day){return{id:p.id,name:p.n,area:p.area,status:stat(p,day),drive_from_cabin:drive(p),visit_hours:p.dur,effort_0to3:p.eff,kid_fun_0to3:p.kid,tags:p.tags,about:p.d,tip:p.tip,day_note:p.day&&p.day[day]||''}}
+const TOOLS=[
+ {name:'set_current_spot',description:'Set where the family is right now: a place id from get_places, "cabin", or lat/lng. Drive times and picks then measure from there.',inputSchema:{type:'object',properties:{id:{type:'string'},lat:{type:'number'},lng:{type:'number'}}},execute:({id,lat,lng})=>{if(id==='cabin'){S.here=null}else if(id){const x=P.find(q=>q.id===id);if(!x)throw new Error('unknown id');S.here={key:x.id,n:x.n,lat:x.lat,lng:x.lng}}else if(isFinite(+lat)&&isFinite(+lng)){S.here={n:'Spot set by Claude',lat:+lat,lng:+lng}}LS.set('here',S.here);renderAll();return{ok:true,now:org()}}},
+ {name:'get_trip_state',description:'Family profile (answers to the questions), cabin location, selected day, current Pacific time, plans for all days, trip notes, packing progress.',inputSchema:{type:'object',properties:{}},execute:()=>{const all=Object.keys(S.check).filter(k=>S.check[k]);return{profile:S.prof,cabin:base(),current_spot:S.here?S.here:'at the cabin',selected_day:DAYS[di(S.day)].full,now_pacific:new Date().toLocaleString('en-US',{timeZone:'America/Los_Angeles'}),plans:Object.fromEntries(Object.entries(S.plan).map(([k,v])=>[DAYS[di(k)].full,v.map(x=>({id:x.id,time:x.time}))])),notes:LS.get('notes',''),packed_items:all.length,custom_pack_items:S.custom,current_tab:S.tab}}},
+ {name:'get_places',description:'All places with open/limited/closed status for a day (25, 26 or 27), drive time from the cabin, tags and tips.',inputSchema:{type:'object',properties:{day:{type:'string',enum:['25','26','27']}}},execute:({day})=>P.map(p=>placeBrief(p,day||S.day))},
+ {name:'get_food',description:'Dining options with hours and status for each day.',inputSchema:{type:'object',properties:{}},execute:()=>EAT.map(e=>({name:e.n,hours:e.h,about:e.d,status_wed_thu_fri:e.st.split('').map(c=>({o:'open',l:'limited',c:'closed'})[c])}))},
+ {name:'get_weather',description:'Forecast snapshot (Yosemite Valley, 4,000 ft, taken Nov 24) plus elevation adjustment for the cabin.',inputSchema:{type:'object',properties:{}},execute:()=>({valley_forecast_F:WX,cabin_elevation_ft:base().el,note:'About 3.5°F colder per 1,000 ft above the Valley. Sunrise ~6:50am, sunset ~4:45pm. Snapshot only; tell the family to check forecast.weather.gov.'})},
+ {name:'get_safety',description:'Safety guidance: driving & chains, cold, icy trails, cabin, bears, lost; emergency numbers; kid activities.',inputSchema:{type:'object',properties:{}},execute:()=>({sections:SAFE,emergency:'Call or text 911. Park info & road/chain recording 209-372-0200 (press 1 then 1). Yosemite Medical Clinic 209-372-4637.',kids:KIDS.map(k=>k.n+': '+k.d)})},
+ {name:'get_packing',description:'Packing list and gear list with which items are checked.',inputSchema:{type:'object',properties:{}},execute:()=>Object.fromEntries(Object.entries(PACK).map(([k,G])=>[k,G.map(([g,a])=>({group:g,items:a.map(t=>({item:t,packed:!!S.check[k+':'+t]}))}))]))},
+ {name:'add_to_plan',description:'Add a place (by id from get_places) to a day\'s plan, optional 24h time like "09:30". Closed places are refused.',inputSchema:{type:'object',properties:{day:{type:'string',enum:['25','26','27']},id:{type:'string'},time:{type:'string'}},required:['day','id']},execute:({day,id,time})=>{const ok=addPlan(day,id,time);renderAll();return{ok,plan:S.plan[day]}}},
+ {name:'remove_from_plan',description:'Remove a place id from a day\'s plan.',inputSchema:{type:'object',properties:{day:{type:'string'},id:{type:'string'}},required:['day','id']},execute:({day,id})=>{S.plan[day]=(S.plan[day]||[]).filter(x=>x.id!==id);save();renderAll();return{ok:true,plan:S.plan[day]}}},
+ {name:'auto_plan_day',description:'Replace a day\'s plan with the app\'s auto-plan based on the family profile.',inputSchema:{type:'object',properties:{day:{type:'string',enum:['25','26','27']}},required:['day']},execute:({day})=>{const o=autoPlan(day);renderAll();return o}},
+ {name:'set_pack_item',description:'Check or uncheck a packing item by its exact text; list is "pack" or "gear". Unknown text in "pack" is added as a custom item.',inputSchema:{type:'object',properties:{list:{type:'string',enum:['pack','gear']},item:{type:'string'},packed:{type:'boolean'}},required:['list','item','packed']},execute:({list,item,packed})=>{const known=PACK[list].some(([,a])=>a.includes(item))||S.custom.includes(item);if(!known&&list==='pack')S.custom.push(item);S.check[list+':'+item]=packed;save();renderPack();return{ok:true}}},
+ {name:'open_tab',description:'Switch the app to a tab: today, map, plan, eat, kids, ask, safe, pack; optionally change the selected day.',inputSchema:{type:'object',properties:{tab:{type:'string'},day:{type:'string'}}},execute:({tab,day})=>{if(day&&di(day)>=0){S.day=day;save();renderAll()}if(tab&&TABS.some(t=>t[0]===tab))go(tab);return{ok:true}}}];
+const SYS='You are Claude inside a family\'s Yosemite trip app (stay Nov 25–27, 2026; they are in cabins; Nov 26 is Thanksgiving). Use the tools to read the app\'s data before answering about places, status, weather, food, safety or their plan; never invent hours or openings. Status was verified Nov 24, 2026; remind them winter conditions change and to check nps.gov/yose conditions or 209-372-0200 for roads and chains. Prioritize safety: chains, ice, daylight (sunset ~4:45pm), kids\' warmth. Keep answers short and phone-friendly: plain text, short lines, no markdown tables. If they ask you to plan or add things, use the plan tools and then say what you changed. Their question follows.\n\n';
+(async()=>{try{sample=await claude.use('sample')}catch(e){sample=null}if(!sample){$('askNote').textContent='Claude chat works when this app is opened in Claude (claude.ai or the Claude app). Everything else works anywhere.'}})();
+$('askForm').addEventListener('submit',async e=>{e.preventDefault();const q=$('askIn').value.trim();if(!q||busy)return;
+ if(!sample){bubble('t','Claude isn\'t connected in this view. Open the app in Claude to chat.');return}
+ busy=true;$('askBtn').disabled=true;$('askIn').value='';bubble('u',q);S.chat.push({role:'user',content:q});
+ const msgs=S.chat.slice(-12).map((m,i,a)=>({role:m.role,content:(i===0&&m.role==='user'?SYS:'')+m.content}));if(msgs[0].role!=='user')msgs.shift();
+ const out=bubble('a','Thinking…');
+ try{const r=await sample(msgs,{tools:TOOLS,cache:false,onText:({text})=>{out.textContent=text||'Thinking…';$('chat').scrollTop=1e6}});out.textContent=r.text||out.textContent;S.chat.push({role:'assistant',content:r.text||''})}
+ catch(err){out.textContent=err&&err.code==='rate_limited'?'Claude is busy — try again in a minute.':err&&err.code==='not_granted'?'Claude access wasn\'t allowed for this page.':'Sorry, something went wrong. Try again.';S.chat.pop()}
+ busy=false;$('askBtn').disabled=false});
+
+
+function renderHere(){const opts=[['__base','At the cabin: '+base().n]].concat(P.filter(p=>stat(p)!=='closed').map(p=>[p.id,p.n]),EAT.filter(e=>e.st[di(S.day)]!=='c').map(e=>['eat:'+e.n,e.n]));
+ const cur=S.here?(S.here.key||'__custom'):'__base';if(cur==='__custom')opts.push(['__custom','Pasted spot ('+S.here.lat.toFixed(4)+', '+S.here.lng.toFixed(4)+')']);if(cur==='__gps')opts.push(['__gps','📍 My GPS location (live)']);
+ $('hereSel').innerHTML=opts.map(([v,n])=>`<option value="${esc(v)}" ${v===cur?'selected':''}>${esc(n)}</option>`).join('');$('hereTag').textContent=S.here?'not at cabin':'at cabin'}
+$('hereSel').addEventListener('change',e=>{const v=e.target.value;if(v!=='__gps'&&gpsWatch!=null){navigator.geolocation.clearWatch(gpsWatch);gpsWatch=null;$('gpsBtn').textContent='🛰️ Use my phone\'s GPS'}if(v==='__base')S.here=null;else if(v==='__custom'||v==='__gps')return;else if(v.startsWith('eat:')){const x=EAT.find(q=>'eat:'+q.n===v);S.here={key:v,n:x.n,lat:x.lat,lng:x.lng}}else{const x=P.find(q=>q.id===v);S.here={key:v,n:x.n,lat:x.lat,lng:x.lng}}LS.set('here',S.here);renderAll()});
+$('hereForm').addEventListener('submit',e=>{e.preventDefault();if(gpsWatch!=null){navigator.geolocation.clearWatch(gpsWatch);gpsWatch=null;$('gpsBtn').textContent='🛰️ Use my phone\'s GPS'}const v=$('hereIn').value.trim();const ll=parseLL(v);
+ if(!ll){$('hereNote').textContent=/goo\.gl|maps\.app/.test(v)?'Short share links can\'t be read here. In Google Maps, tap your blue dot and copy the coordinates instead (like 37.7456, -119.5936).':'Couldn\'t find coordinates. Paste numbers like 37.7456, -119.5936.';return}
+ S.here={n:'Pasted spot',lat:ll.lat,lng:ll.lng};LS.set('here',S.here);$('hereIn').value='';renderAll()});
+
+$('shareHere').addEventListener('click',()=>{const o=org(),name=S.here?S.here.n:'our cabin ('+base().n+')';go('ask');$('askIn').value='📍 We are at '+name+' right now (coordinates '+o.lat.toFixed(4)+', '+o.lng.toFixed(4)+'). Based on where we are, the current time, the weather and what is open today, what should we do next nearby? Give 2-3 options with travel times.';$('askForm').requestSubmit()});
+
+let gpsWatch=null,gpsLast=0;
+function gpsOk(pos){const c=pos.coords,prev=S.here;S.here={key:'__gps',n:'My GPS location',lat:c.latitude,lng:c.longitude,gps:true,acc:Math.round(c.accuracy)};LS.set('here',S.here);const moved=!prev||!prev.gps||Math.abs(prev.lat-c.latitude)+Math.abs(prev.lng-c.longitude)>.002;
+ $('gpsBtn').textContent='🛰️ GPS on · ±'+Math.round(c.accuracy)+' m';$('hereNote').textContent='Live GPS is on: your spot updates as you move while the app is open.';if(moved||Date.now()-gpsLast>120000){gpsLast=Date.now();renderAll()}}
+function gpsErr(e){if(gpsWatch!=null){try{navigator.geolocation.clearWatch(gpsWatch)}catch(_){}gpsWatch=null}$('gpsBtn').textContent='🛰️ Use my phone\'s GPS';
+ $('hereNote').textContent=e&&e.code===1?'GPS is blocked here. Inside Claude, pages are not allowed to read location even if you allow it. Paste your spot from Google Maps instead, or use the GPS website copy of this app.':e&&e.code===3?'GPS took too long (weak signal?). Try again outside, or paste your spot.':'Couldn\'t get GPS right now. Paste your spot from Google Maps instead.'}
+$('gpsBtn').addEventListener('click',()=>{if(gpsWatch!=null){navigator.geolocation.clearWatch(gpsWatch);gpsWatch=null;$('gpsBtn').textContent='🛰️ Use my phone\'s GPS';$('hereNote').textContent='GPS turned off. Your last spot is kept.';return}
+ if(!('geolocation' in navigator)){gpsErr({code:1});return}$('gpsBtn').textContent='🛰️ Finding you…';
+ try{gpsWatch=navigator.geolocation.watchPosition(gpsOk,gpsErr,{enableHighAccuracy:true,timeout:15000,maximumAge:30000})}catch(e){gpsErr({code:1})}});
+/* ---------- boot ---------- */
+function renderAll(){renderHere();renderDays();renderToday();renderMap();renderList();renderPlan();renderEat();renderKids();renderPack()}
+renderAll();
+const h=(location.hash||'').slice(1);if(TABS.some(t=>t[0]===h))go(h);
+if(!S.prof)openQuiz();
+}
+</script>
+</body>
+</html>
