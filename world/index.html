@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trip Guide Anywhere</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&display=swap" rel="stylesheet">
+<style>
+/* VOICE: a friendly, well-travelled local friend — practical, safety-aware, upbeat.
+   IDEA: a luggage tag and boarding pass: destination set big, a dotted route line, stamped status chips.
+   PICTURE: the tag header carrying the destination and dates, then the working guide below.
+   COLOUR and TYPE: sand-white ground, deep teal #0d4f5c, coral accent #f0643a; Sora headings + Nunito Sans.
+   LAYOUT: phone-first, sticky day strip, bottom tab bar, single column of cards; two columns above 900px. */
+:root{color-scheme:light dark;--bg:light-dark(#f7f5f0,#0e1719);--card:light-dark(#fff,#162326);--ink:light-dark(#152024,#e6eff0);--mut:light-dark(#5a686c,#93a7ab);--line:light-dark(#e3e0d8,#27393d);--teal:light-dark(#0d4f5c,#6cc3d1);--coral:light-dark(#d9512a,#ff8a63);--ok:light-dark(#1b7a4b,#6fd39b);--amber:light-dark(#9a6200,#f3b84f);--red:light-dark(#c3321f,#ff7a62);--chip:light-dark(#efece5,#1f3135)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html{scroll-padding-top:120px}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Nunito Sans",system-ui,sans-serif;overflow-x:clip;padding-bottom:84px}
+h1,h2,h3{font-family:Sora,system-ui,sans-serif;line-height:1.1;margin:0;text-wrap:balance}
+h1{font-size:clamp(30px,8vw,46px)}h2{font-size:22px;margin:22px 0 10px}h3{font-size:17px}
+a{color:var(--teal)}
+.wrap{max-width:1100px;margin:0 auto;padding:0 14px}
+.tagh{background:#0d4f5c;color:#fff;position:relative;overflow:hidden}
+.tagh .in{padding:18px 14px 16px;position:relative;z-index:1}
+.tagh svg.route{position:absolute;inset:0;width:100%;height:100%;opacity:.35}
+.tagh .k{font-size:13px;opacity:.85;font-weight:700}
+.tagh .sub{margin-top:6px;opacity:.92;font-size:15px}
+.tagh select{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.35);max-width:100%}
+.tagh select option{color:#152024}
+.daybar{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--line);padding:8px 0}
+.days{display:flex;gap:8px;overflow-x:auto}
+.days button{flex:0 0 auto;min-width:76px;min-height:48px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:12px;padding:6px 10px;font:700 15px "Nunito Sans";cursor:pointer}
+.days button small{display:block;font-weight:400;color:var(--mut);font-size:12px}
+.days button[aria-pressed=true]{background:var(--teal);color:#fff;border-color:var(--teal)}
+.days button[aria-pressed=true] small{color:#d6eef2}
+.tab{display:none;padding:12px 0 24px}.tab.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0}
+.grid{display:grid;gap:10px;grid-template-columns:minmax(0,1fr)}
+@media(min-width:900px){.grid.two{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.sp{justify-content:space-between}
+.mut{color:var(--mut)}.small{font-size:14px}
+.pill{display:inline-flex;align-items:center;border-radius:999px;padding:2px 10px;font-size:13px;font-weight:700;white-space:nowrap}
+.open{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+.limited{background:color-mix(in srgb,var(--amber) 18%,transparent);color:var(--amber)}
+.closed{background:color-mix(in srgb,var(--red) 14%,transparent);color:var(--red)}
+.tag{background:var(--chip);color:var(--mut);border-radius:8px;padding:1px 8px;font-size:13px;white-space:nowrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:8px 14px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:700 15px "Nunito Sans";cursor:pointer;text-decoration:none}
+.btn.pri{background:var(--teal);border-color:var(--teal);color:#fff}.btn.cor{background:var(--coral);border-color:var(--coral);color:#fff}
+.btn:disabled{opacity:.55;cursor:default}
+.btn:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--coral);outline-offset:2px}
+input,select,textarea{font:16px "Nunito Sans";color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px;min-height:44px;width:100%}
+label.f{display:block;font-weight:700;margin:14px 0 6px}
+.alert{border-left:5px solid var(--coral)}
+.wx{display:flex;gap:8px;overflow-x:auto}
+.wx div{flex:0 0 84px;background:var(--chip);border-radius:12px;padding:8px;text-align:center}
+.wx b{font:700 20px Sora}.wx .sel{outline:2px solid var(--teal)}
+.big{font:700 42px/1 Sora}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--card);border-top:1px solid var(--line);display:flex;overflow-x:auto;padding-bottom:env(safe-area-inset-bottom)}
+nav.tabs button{flex:1 0 62px;min-height:62px;border:0;background:none;color:var(--mut);font:700 12px "Nunito Sans";cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+nav.tabs svg{width:22px;height:22px}nav.tabs button[aria-selected=true]{color:var(--coral)}
+.fig{background:light-dark(#e6eeee,#132327);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.fig svg{display:block;width:100%;height:auto}
+.seg{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.seg button{min-height:40px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:4px 14px;font:700 14px "Nunito Sans";cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--teal);color:#fff;border-color:var(--teal)}
+ul.chk{list-style:none;margin:0;padding:0}
+ul.chk li{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line)}
+ul.chk input{width:22px;height:22px;min-height:22px;margin-top:2px;flex:none;accent-color:var(--teal)}
+ul.chk li.done span{text-decoration:line-through;color:var(--mut)}
+.bar{height:10px;background:var(--chip);border-radius:6px;overflow:hidden}.bar i{display:block;height:100%;background:var(--teal)}
+.plan ol{list-style:none;margin:0;padding:0}
+.plan li{display:grid;grid-template-columns:122px minmax(0,1fr) auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.chat{display:flex;flex-direction:column;gap:8px;max-height:58vh;overflow-y:auto;padding:4px}
+.msg{padding:10px 12px;border-radius:14px;max-width:88%;white-space:pre-wrap;overflow-wrap:anywhere}
+.msg.u{align-self:flex-end;background:var(--teal);color:#fff}.msg.a{align-self:flex-start;background:var(--chip)}.msg.t{align-self:center;font-size:13px;color:var(--mut)}
+.bingo{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.bingo button{aspect-ratio:1;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);font:700 13px/1.15 "Nunito Sans";padding:4px;cursor:pointer}
+.bingo button[aria-pressed=true]{background:var(--coral);color:#fff}
+.opts{display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.opts label{display:flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--card);min-height:46px;cursor:pointer}
+.opts input{width:20px;height:20px;min-height:20px;flex:none}
+details summary{cursor:pointer;min-height:40px;display:flex;align-items:center}
+.prog{display:grid;gap:8px}.prog div{display:flex;gap:10px;align-items:center}
+.dot{width:12px;height:12px;border-radius:50%;background:var(--chip);flex:none}.dot.run{background:var(--amber)}.dot.ok{background:var(--ok)}.dot.err{background:var(--red)}
+@media(prefers-reduced-motion:no-preference){.dot.run{animation:pul 1s ease-in-out infinite alternate}@keyframes pul{to{opacity:.3}}}
+.sos{font:700 24px Sora}
+#app[hidden],#setup[hidden]{display:none}
+</style>
+</head>
+<body>
+<header class="tagh">
+<svg class="route" viewBox="0 0 400 160" preserveAspectRatio="none" aria-hidden="true"><path d="M-10 140C80 60 160 150 250 70S390 30 420 10" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="3 7"/><circle cx="250" cy="70" r="5" fill="#f0643a"/></svg>
+<div class="in wrap">
+ <div class="row sp"><span class="k" id="hk">TRIP GUIDE · ANYWHERE</span><select id="tripSel" aria-label="Switch trip" style="width:auto;min-height:38px;padding:4px 8px"></select></div>
+ <h1 id="hDest">Where are you going?</h1>
+ <div class="sub" id="hSub">Pick a place in the world and Claude builds your guide.</div>
+</div>
+</header>
+
+<!-- SETUP -->
+<section id="setup" class="wrap" aria-label="New trip">
+ <div class="card">
+  <h2 style="margin-top:0">Plan a trip</h2>
+  <form id="setupForm">
+   <label class="f" for="fDest">Destination</label>
+   <input id="fDest" name="dest" required placeholder="e.g. Kyoto, Japan · Banff, Canada · Lisbon" autocomplete="off">
+   <div class="seg" id="ideas"></div>
+   <div class="grid two">
+    <div><label class="f" for="fStart">First day</label><input type="date" id="fStart" name="start" required></div>
+    <div><label class="f" for="fEnd">Last day (max 10 days)</label><input type="date" id="fEnd" name="end" required></div>
+   </div>
+   <label class="f" for="fBase">Where are you staying?</label>
+   <input id="fBase" name="base" placeholder="Hotel, cabin, neighborhood or address">
+   <input id="fLL" name="ll" placeholder="Optional: paste coordinates, e.g. 35.0036, 135.7681" style="margin-top:6px">
+   <label class="f" for="fLodge">Type of stay</label>
+   <select id="fLodge" name="lodge"><option>Hotel</option><option>Cabin</option><option>Vacation rental</option><option>Hostel</option><option>Campsite / RV</option><option>Staying with family</option></select>
+   <fieldset style="border:0;padding:0;margin:0"><legend class="f" style="margin-top:14px">Who's coming?</legend><div class="opts" id="oWho"></div></fieldset>
+   <fieldset style="border:0;padding:0;margin:0"><legend class="f" style="margin-top:14px">What do you love?</legend><div class="opts" id="oInt"></div></fieldset>
+   <div class="grid two">
+    <div><label class="f" for="fWalk">Walking</label><select id="fWalk" name="walk"><option value="easy">Short, flat strolls</option><option value="mod" selected>A few miles, some hills</option><option value="strong">Long or steep is fine</option></select></div>
+    <div><label class="f" for="fMove">Getting around</label><select id="fMove" name="move"><option value="car">Car</option><option value="transit">Public transport</option><option value="walk">Mostly walking</option></select></div>
+    <div><label class="f" for="fPace">Pace</label><select id="fPace" name="pace"><option value="relax">Relaxed</option><option value="bal" selected>Balanced</option><option value="packed">See as much as possible</option></select></div>
+    <div><label class="f" for="fUnit">Units</label><select id="fUnit" name="unit"><option value="us">°F · miles</option><option value="metric">°C · km</option></select></div>
+   </div>
+   <label class="f" for="fNote">Anything else? (budget, diet, mobility, must-sees)</label>
+   <textarea id="fNote" name="note" rows="3" placeholder="e.g. vegetarian, stroller, love trains, first time abroad"></textarea>
+   <div class="row" style="margin-top:16px"><button class="btn cor" id="buildBtn" style="flex:1">Build my guide</button><button type="button" class="btn" id="cancelSetup" hidden>Cancel</button></div>
+   <p class="small mut" id="setupNote"></p>
+  </form>
+  <div id="progress" class="prog" hidden></div>
+ </div>
+ <div class="card"><h3>Import a trip</h3><p class="small mut">Built a guide in the Claude version? Tap <b>Copy trip</b> there (Local tab), then paste it here. Use this to open your guide on the GPS website.</p>
+  <textarea id="impIn" rows="3" placeholder="Paste trip code here"></textarea><div class="row" style="margin-top:8px"><button type="button" class="btn pri" id="impBtn">Import trip</button></div><p class="small" id="impNote"></p></div>
+ <div class="card small mut">Claude writes the guide from what it knows. It can't browse the web from here, so opening hours, closures and weather are <b>typical</b> for your dates, not live. Always confirm important details (tickets, holiday hours, road closures) with official sites before you go.</div>
+</section>
+
+<!-- APP -->
+<div id="app" hidden>
+<div class="daybar"><div class="wrap days" id="days" role="group" aria-label="Choose day"></div></div>
+<main class="wrap">
+<section class="tab on" id="t-today" aria-label="Today">
+ <p id="summary" class="small" style="margin:12px 0 0"></p>
+ <div class="card alert" id="alerts"></div>
+ <div class="card" id="hereCard"><div class="row sp"><h3>Where are you now?</h3><span class="tag" id="hereTag"></span></div>
+ <select id="hereSel" aria-label="Your current spot" style="margin-top:8px"></select>
+ <form id="hereForm" class="row" style="flex-wrap:nowrap;margin-top:8px"><input id="hereIn" placeholder="Or paste coordinates / a Google Maps link" autocomplete="off"><button class="btn">Set</button></form>
+ <div class="row" style="margin-top:8px"><button type="button" class="btn" id="gpsBtn" style="flex:1">🛰️ Use my phone's GPS</button><button type="button" class="btn pri" id="shareHere" style="flex:1">📍 Share my location with Claude</button></div>
+ <p class="small mut" id="hereNote" style="margin-bottom:0">Picks, drive times and suggestions are measured from here. To find your exact spot: open <a href="https://www.google.com/maps" target="_blank" rel="noopener">Google Maps</a>, tap your blue dot, copy the numbers, and paste them above.</p></div>
+ <div class="grid two">
+  <div class="card"><div class="row sp"><h3>Typical weather</h3><span class="tag">climate normals</span></div>
+   <div class="row" style="margin:8px 0"><span class="big" id="wxHi"></span><div><div id="wxCond"></div><div class="small mut" id="wxLo"></div></div></div>
+   <div class="wx" id="wxStrip"></div><p class="small mut" id="wxNote"></p>
+   <a class="btn" id="wxLink" target="_blank" rel="noopener">Live forecast</a></div>
+  <div class="card"><h3>Daylight &amp; local time</h3>
+   <div class="row" style="margin:8px 0"><span class="big" id="dlLeft">—</span><span class="mut" id="dlLbl"></span></div>
+   <p class="small" id="sunTxt"></p><h3>Right now</h3><p class="small" id="rightNow"></p></div>
+ </div>
+ <div class="row sp"><h2>Top picks · <span class="dname"></span></h2><button class="btn" id="editTrip">Edit trip</button></div>
+ <div id="picks" class="grid two"></div>
+ <h2>Closed or limited · <span class="dname"></span></h2><div id="closedList"></div>
+</section>
+
+<section class="tab" id="t-map" aria-label="Map">
+ <h2>Map</h2><div class="fig" id="mapFig"></div>
+ <div class="row small mut" style="margin:6px 0"><span class="pill open">● open</span><span class="pill limited">● limited</span><span class="pill closed">● closed</span><span>★ where you're staying · <b style="color:#2f7de1">●</b> you are here · tap a pin</span></div>
+ <div id="mapCard"></div>
+ <div class="card"><h3>Google Maps</h3><p class="small mut">Directions buttons open Google Maps, which uses your phone's GPS. Download the area for offline use in the Google Maps app in case of weak signal.</p><a class="btn pri" id="gmArea" target="_blank" rel="noopener">Open area in Google Maps</a></div>
+ <h2>All places · <span class="dname"></span></h2><div class="seg" id="catSeg"></div><div id="allList" class="grid two"></div>
+</section>
+
+<section class="tab" id="t-plan" aria-label="Plan">
+ <div class="row sp"><h2>Plan · <span class="dname"></span></h2><div class="row"><button class="btn pri" id="autoPlan">Auto-plan this day</button><button class="btn" id="copyPlan">Copy plan</button></div></div>
+ <div class="card plan"><ol id="planList"></ol><p class="mut small" id="planEmpty">Nothing planned yet. Tap “Add to plan”, use Auto-plan, or ask Claude.</p></div>
+ <div class="card"><h3>Trip notes</h3><textarea id="notes" rows="4" placeholder="Confirmation numbers, check-in time, reservations…"></textarea></div>
+</section>
+
+<section class="tab" id="t-eat" aria-label="Eat"><h2>Places to eat · <span class="dname"></span></h2><div id="eatList" class="grid two"></div></section>
+
+<section class="tab" id="t-kids" aria-label="Kids"><h2>Fun for kids</h2><div id="kidList" class="grid two"></div>
+ <div class="card"><div class="row sp"><h3>Spot-it bingo</h3><button class="btn" id="bingoReset">New card</button></div><p class="small mut">Tap a square when you spot it. Four in a row wins a treat.</p><div class="bingo" id="bingo"></div><p class="small" id="bingoWin" style="font-weight:700"></p></div>
+ <div class="card"><h3>Kid safety rules</h3><ul class="small"><li>Stay where a grown-up can see you.</li><li>Know the name of where you're staying (write it on a card in your pocket).</li><li>If you're lost: stop, stay put, and ask a worker in uniform or a parent with kids.</li><li>Never go near water, cliffs or traffic without a grown-up.</li></ul></div>
+</section>
+
+<section class="tab" id="t-ask" aria-label="Ask Claude"><h2>Ask Claude</h2>
+ <p class="small mut">Claude can see everything in this trip: your answers, where you're staying, days, places and their status, food, weather, safety, local tips, your plan and pack list. It can add or remove stops, add new places to the map, plan days and tick items off.</p>
+ <div class="card"><div class="chat" id="chat" aria-live="polite"></div><div class="seg" id="sugg"></div>
+ <form id="askForm" class="row" style="flex-wrap:nowrap"><input id="askIn" placeholder="Ask anything about this trip…" autocomplete="off"><button class="btn pri" id="askBtn">Send</button><button type="button" class="btn" id="stopBtn" hidden>Stop</button></form>
+ <p class="small mut" id="askNote"></p></div>
+</section>
+
+<section class="tab" id="t-safe" aria-label="Safety"><h2>Safety</h2>
+ <div class="card alert"><div class="sos" id="sosNum"></div><p class="small" id="sosTxt"></p><div class="row" id="sosBtns"></div></div>
+ <div class="card"><h3>Emergency card</h3><p class="small mut">Saved on this phone, for this trip.</p><textarea id="sosCard" rows="5" placeholder="Names & ages · where you're staying (address) · meeting point · medical needs/allergies · embassy or insurance number"></textarea></div>
+ <div id="safetyList"></div>
+</section>
+
+<section class="tab" id="t-pack" aria-label="Pack"><h2>Packing</h2>
+ <div class="seg" id="packSeg"><button data-p="pack" aria-pressed="true">Pack list</button><button data-p="gear" aria-pressed="false">Gear &amp; materials</button></div>
+ <div class="card"><div class="row sp"><b id="packCount"></b><button class="btn" id="packClear">Uncheck all</button></div><div class="bar" style="margin-top:8px"><i id="packBar"></i></div></div>
+ <div id="packList"></div>
+ <form id="packAdd" class="row" style="flex-wrap:nowrap;margin-top:10px"><input id="packIn" placeholder="Add your own item"><button class="btn pri">Add</button></form>
+</section>
+
+<section class="tab" id="t-local" aria-label="Local tips"><h2>Local know-how</h2><div id="localList"></div>
+ <div class="card"><h3>Manage this trip</h3><div class="row"><button class="btn pri" id="expBtn">Copy trip (for GPS website)</button><button class="btn" id="regen">Rebuild guide</button><button class="btn" id="newTrip2">New trip</button><button class="btn" id="delTrip">Delete trip</button></div><p class="small mut" id="delNote"></p><textarea id="expOut" rows="3" readonly hidden aria-label="Trip code"></textarea><p class="small mut">GPS website: <a href="https://varmareyansh1-crypto.github.io/yosemite-snow-trip/world/" target="_blank" rel="noopener">varmareyansh1-crypto.github.io/yosemite-snow-trip/world</a></p></div>
+</section>
+
+<p class="card small mut">This guide was written by Claude from general knowledge for these dates. Hours, closures, prices and weather are typical, not live: confirm with official sources and check the live forecast before heading out.</p>
+</main>
+<nav class="tabs" role="tablist" id="tabs"></nav>
+</div>
+
+<script>
+{
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const LS={get(k,d){try{const v=localStorage.getItem('wtg_'+k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem('wtg_'+k,JSON.stringify(v));return true}catch(e){return false}},del(k){try{localStorage.removeItem('wtg_'+k)}catch(e){}}};
+const num=(v,d=0)=>{const n=Number(v);return isFinite(n)?n:d};
+const arr=v=>Array.isArray(v)?v:[];
+
+/* ---------- trips store ---------- */
+let trips=LS.get('trips',{}),cur=LS.get('cur',null),T=null,day=0,tab='today',cat='all',pk='pack',sample=null,busy=false,ctl=null;
+const saveT=()=>{if(!T)return;trips[T.id]=T;if(!LS.set('trips',trips)){/* storage full */}LS.set('cur',T.id)};
+
+/* ---------- setup form ---------- */
+const WHO=[['kidsmall','Kids under 5'],['kidbig','Kids 5–12'],['teen','Teens'],['adult','Adults'],['senior','Seniors / limited mobility']];
+const INT=[['views','Views & photos'],['nature','Nature & hikes'],['history','History & culture'],['museums','Museums'],['food','Food'],['kids','Kid fun'],['shopping','Shopping & markets'],['night','Nightlife'],['beach','Beaches & water'],['snow','Snow & winter'],['quiet','Quiet spots'],['adventure','Adventure']];
+$('oWho').innerHTML=WHO.map(([v,n])=>`<label><input type="checkbox" name="who" value="${v}" ${v==='adult'?'checked':''}>${n}</label>`).join('');
+$('oInt').innerHTML=INT.map(([v,n])=>`<label><input type="checkbox" name="ints" value="${v}" ${['views','food','history'].includes(v)?'checked':''}>${n}</label>`).join('');
+$('ideas').innerHTML=['Kyoto, Japan','Banff, Canada','Paris, France','Orlando, Florida','Reykjavík, Iceland','Yosemite, California'].map(s=>`<button type="button" data-i="${esc(s)}" aria-pressed="false">${esc(s)}</button>`).join('');
+$('ideas').addEventListener('click',e=>{const b=e.target.closest('[data-i]');if(b)$('fDest').value=b.dataset.i});
+const iso=d=>d.toISOString().slice(0,10);
+{const t=new Date();t.setDate(t.getDate()+1);$('fStart').value=iso(t);t.setDate(t.getDate()+2);$('fEnd').value=iso(t)}
+function fillForm(p){const f=$('setupForm');f.dest.value=p.dest;f.start.value=p.start;f.end.value=p.end;f.base.value=p.base||'';f.ll.value=p.lat!=null?p.lat+', '+p.lng:'';f.lodge.value=p.lodge;f.walk.value=p.walk;f.move.value=p.move;f.pace.value=p.pace;f.unit.value=p.unit;f.note.value=p.note||'';
+ f.querySelectorAll('[name=who]').forEach(i=>i.checked=p.who.includes(i.value));f.querySelectorAll('[name=ints]').forEach(i=>i.checked=p.ints.includes(i.value))}
+function readForm(){const f=new FormData($('setupForm'));const p={dest:f.get('dest').trim(),start:f.get('start'),end:f.get('end'),base:(f.get('base')||'').trim(),lodge:f.get('lodge'),who:f.getAll('who'),ints:f.getAll('ints'),walk:f.get('walk'),move:f.get('move'),pace:f.get('pace'),unit:f.get('unit'),note:(f.get('note')||'').trim()};
+ const ll=(f.get('ll')||'').match(/(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/);if(ll){p.lat=+ll[1];p.lng=+ll[2]}return p}
+function dayList(p){const out=[];const a=new Date(p.start+'T12:00:00'),b=new Date(p.end+'T12:00:00');for(let d=new Date(a);d<=b&&out.length<10;d.setDate(d.getDate()+1))out.push({iso:iso(d),wd:d.toLocaleDateString('en-US',{weekday:'short'}),md:d.toLocaleDateString('en-US',{month:'short',day:'numeric'}),full:d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})});return out}
+
+/* ---------- Claude prompts ---------- */
+function ctxText(p,D){const who=p.who.map(w=>WHO.find(x=>x[0]===w)?.[1]).join(', ')||'adults',ints=p.ints.map(w=>INT.find(x=>x[0]===w)?.[1]).join(', ');
+ return `Destination: ${p.dest}\nDates (${D.length} days): ${D.map(d=>d.iso+' ('+d.wd+')').join(', ')}\nStaying at: ${p.base||'not specified'} (${p.lodge})${p.lat!=null?` at coordinates ${p.lat}, ${p.lng}`:''}\nGroup: ${who}\nInterests: ${ints||'general sightseeing'}\nWalking: ${p.walk}; getting around: ${p.move}; pace: ${p.pace}\nNotes: ${p.note||'none'}`}
+function promptA(p,D){return `You are writing the data for a family travel-guide phone app. Use only real, well-known, long-established places that you are confident exist. Give coordinates to 4 decimals. For each place give a status for EACH trip day, in order, as "o" (open/usable), "l" (limited, seasonal, reduced hours, weather-dependent, needs booking or you are unsure) or "c" (normally closed that day: weekly closing day, public holiday, seasonal closure). If unsure, use "l" and say "check hours" in note.
+
+${ctxText(p,D)}
+
+Reply with only one JSON object, no other text:
+{"title":"short place name","country":"","summary":"2 sentences about what this trip will be like on these dates","timezone":"IANA zone e.g. Asia/Tokyo","currency":"e.g. JPY (¥)","base":{"name":"","lat":0,"lng":0},"alerts":["up to 4 short, important things for these exact dates: holidays, seasonal closures, events, weather risks"],
+"places":[{"id":"kebab-id","name":"","cat":"sight|nature|museum|walk|kids|night|shopping|daytrip","area":"neighborhood","lat":0,"lng":0,"hours":"typical hours","price":"typical entry price or Free","dur":1.5,"effort":0,"kid":2,"tags":["views"],"about":"1-2 sentences","tip":"one practical tip","status":["o"],"note":"why limited/closed, else empty"}],
+"food":[{"id":"kebab-id","name":"","type":"cuisine","area":"","lat":0,"lng":0,"price":"$-$$$$","hours":"typical","about":"1 sentence, what to order","kid":true,"status":["o"]}],
+"kids":[{"name":"","about":"1-2 sentences","place":"a places id or null"}]}
+Give 14-18 places spread across categories that fit the group (within a sensible day-trip range of where they stay), 8-10 food spots (mix of quick/cheap, local classics, one special meal; note diet needs), 6-8 kid activities (if no kids, ideas for teens/adults still fine). effort and kid are 0-3. dur is hours. Tags from: views, nature, history, museums, food, kids, shopping, night, beach, snow, quiet, adventure, photo, indoor, easy walk.`}
+function promptB(p,D){return `You are writing the data for a family travel-guide phone app.
+
+${ctxText(p,D)}
+
+Reply with only one JSON object, no other text:
+{"weather":[{"date":"YYYY-MM-DD","hi_c":0,"lo_c":0,"cond":"typical conditions","precip_pct":0}],"climate_note":"1-2 sentences on typical weather these dates and what to watch for","sun":{"sunrise":"HH:MM","sunset":"HH:MM"},
+"emergency":{"number":"main emergency number","police":"","ambulance":"","fire":"","other":"tourist police, poison line or similar if relevant","notes":"1 sentence: e.g. tell them your location, the language, EU 112 etc."},
+"safety":[{"title":"","items":["short, specific, practical"]}],
+"pack":[{"group":"","items":[""]}],"gear":[{"group":"","items":[""]}],
+"local":[{"title":"","items":[""]}],
+"bingo":["16 short things kids might spot here"]}
+weather: one entry per trip day, typical climate normals for that place and date (not a live forecast), Celsius. sun: approximate local times mid-trip. safety: 5-6 sections tailored to this place, season and group (e.g. weather/cold or heat, traffic & transport, scams/pickpockets, health & water, wildlife or water safety, getting lost). 4-6 items each. pack: 5 groups of personal items (clothing for this weather, day bag, documents/money incl. passport/visa/adapters if abroad, kids, toiletries/health). gear: 3-4 groups of equipment/materials (transport/car kit, outdoor/traction or sun gear, electronics & power with the right plug type, lodging supplies). local: 6-7 sections: Money & tipping, Getting around, Phrases (with pronunciation), Etiquette, Phone & internet, Power plugs & voltage, Good to know.`}
+
+/* ---------- build ---------- */
+const STEPS=[['a','Places, food & kids activities'],['b','Weather, safety, packing & local tips']];
+function showProg(st){$('progress').hidden=false;$('progress').innerHTML=STEPS.map(([k,n])=>`<div><span class="dot ${st[k]}"></span><span>${n}${st[k]==='err'?' — failed':''}</span></div>`).join('')+(Object.values(st).includes('err')?'<button class="btn" id="retry">Try again</button>':'<p class="small mut">This usually takes 30–90 seconds.</p>')}
+function clean(A,B,D){const n=D.length,stat=s=>{s=arr(s);return Array.from({length:n},(_,i)=>['o','l','c'].includes(s[i])?s[i]:'l')};
+ const seen=new Set(),id=(x,i,pre)=>{let v=String(x.id||pre+i).toLowerCase().replace(/[^a-z0-9-]/g,'-').slice(0,40)||pre+i;while(seen.has(v))v+='x';seen.add(v);return v};
+ const P=arr(A.places).filter(x=>x&&x.name&&isFinite(+x.lat)&&isFinite(+x.lng)).map((x,i)=>({id:id(x,i,'p'),name:String(x.name),cat:String(x.cat||'sight'),area:String(x.area||''),lat:+x.lat,lng:+x.lng,hours:String(x.hours||''),price:String(x.price||''),dur:num(x.dur,1),effort:num(x.effort,1),kid:num(x.kid,1),tags:arr(x.tags).map(String).slice(0,6),about:String(x.about||''),tip:String(x.tip||''),status:stat(x.status),note:String(x.note||'')}));
+ const F=arr(A.food).filter(x=>x&&x.name).map((x,i)=>({id:id(x,i,'f'),name:String(x.name),type:String(x.type||''),area:String(x.area||''),lat:num(x.lat,NaN),lng:num(x.lng,NaN),price:String(x.price||''),hours:String(x.hours||''),about:String(x.about||''),kid:!!x.kid,status:stat(x.status)}));
+ const sec=v=>arr(v).filter(x=>x&&x.title||x&&x.group).map(x=>({t:String(x.title||x.group),i:arr(x.items).map(String)}));
+ return{title:String(A.title||''),country:String(A.country||''),summary:String(A.summary||''),tz:String(A.timezone||''),currency:String(A.currency||''),base:A.base&&isFinite(+A.base.lat)?{name:String(A.base.name||'Where you stay'),lat:+A.base.lat,lng:+A.base.lng}:null,alerts:arr(A.alerts).map(String).slice(0,5),places:P,food:F,
+  kids:arr(A.kids).filter(x=>x&&x.name).map(x=>({name:String(x.name),about:String(x.about||''),place:x.place?String(x.place):null})),
+  weather:D.map((d,i)=>{const w=arr(B.weather).find(x=>x&&x.date===d.iso)||arr(B.weather)[i]||{};return{hi:num(w.hi_c,NaN),lo:num(w.lo_c,NaN),cond:String(w.cond||''),p:num(w.precip_pct,0)}}),
+  climate:String(B.climate_note||''),sun:{rise:String(B.sun?.sunrise||''),set:String(B.sun?.sunset||'')},emer:B.emergency||{},safety:sec(B.safety),pack:sec(B.pack),gear:sec(B.gear),local:sec(B.local),bingo:arr(B.bingo).map(String).slice(0,16)}}
+let pending=null;
+async function build(p,keepId){const D=dayList(p);if(!D.length){$('setupNote').textContent='Check the dates: the last day must be on or after the first.';return}
+ if(!sample){$('setupNote').textContent='Building a new guide needs Claude: open the Claude version, build your trip, tap Copy trip on its Local tab, then import it below.';return}
+ $('buildBtn').disabled=true;$('setupNote').textContent='';const st={a:'run',b:'run'};showProg(st);
+ const res={};pending={p,keepId};
+ await Promise.all([['a',promptA],['b',promptB]].map(async([k,fn])=>{try{res[k]=await sample.json(fn(p,D),{modelTier:'default'});st[k]='ok'}catch(e){st[k]='err';res.err=e&&e.code}showProg(st)}));
+ $('buildBtn').disabled=false;
+ if(res.a&&res.b){const data=clean(res.a,res.b,D);if(!data.places.length){st.a='err';showProg(st);return}
+  const old=keepId&&trips[keepId];const id=keepId||('t'+Date.now().toString(36));
+  T={id,prof:p,days:D,data,plan:old?old.plan:{},check:old?old.check:{},custom:old?old.custom:[],notes:old?old.notes:'',sos:old?old.sos:'',bingo:null,chat:[],created:Date.now()};
+  Object.keys(T.plan).forEach(k=>{if(+k>=D.length)delete T.plan[k];else T.plan[k]=T.plan[k].filter(x=>data.places.some(q=>q.id===x.id))});
+  day=0;saveT();$('progress').hidden=true;openApp()}
+ else if(res.err==='not_granted'){$('setupNote').textContent='Claude access was not allowed, so the guide can\'t be built.'}
+ else if(res.err==='rate_limited'){$('setupNote').textContent='Claude is busy or you\'ve reached a usage limit. Try again in a bit.'}}
+$('progress').addEventListener('click',e=>{if(e.target.id==='retry'&&pending)build(pending.p,pending.keepId)});
+$('setupForm').addEventListener('submit',e=>{e.preventDefault();build(readForm(),$('setupForm').dataset.edit||null)});
+$('cancelSetup').addEventListener('click',()=>{if(T)openApp()});
+
+/* ---------- helpers ---------- */
+const D=()=>T.days,X=()=>T.data,P=()=>X().places;
+const SL={o:'Open',l:'Limited · check',c:'Closed'},CL={o:'open',l:'limited',c:'closed'};
+const st=(x,d=day)=>x.status[d]||'l';
+const us=()=>T.prof.unit!=='metric';
+const tmp=c=>isFinite(c)?Math.round(us()?c*9/5+32:c)+'°':'–';
+const base=()=>T.prof.lat!=null?{name:T.prof.base||'Where you stay',lat:T.prof.lat,lng:T.prof.lng}:(X().base||{name:'Center',lat:P()[0].lat,lng:P()[0].lng});
+function parseLL(v){v=String(v);let m=v.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/)||v.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)||v.match(/(-?\d{1,2}\.\d+)\s*[, ]\s*(-?\d{1,3}\.\d+)/);if(!m)return null;const a=+m[1],b=+m[2];return Math.abs(a)<=90&&Math.abs(b)<=180?{lat:a,lng:b}:null}
+const org=()=>T.here||base();
+function km(a,b){const R=6371,t=Math.PI/180,dl=(b.lat-a.lat)*t,dn=(b.lng-a.lng)*t,x=Math.sin(dl/2)**2+Math.cos(a.lat*t)*Math.cos(b.lat*t)*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.sqrt(x))}
+const SPD={car:38,transit:20,walk:4.5};
+function mins(p){if(!isFinite(p.lat))return null;return Math.round(km(org(),p)*1.3/SPD[T.prof.move]*60)+(T.prof.move==='transit'?8:0)}
+function travel(p){const m=mins(p);if(m==null)return'';const k=km(org(),p),d=us()?(k*.621).toFixed(k<16?1:0)+' mi':k.toFixed(k<10?1:0)+' km';const how={car:'drive',transit:'by transit',walk:'walk'}[T.prof.move];return (m<6?'nearby':(m<60?m+' min':Math.floor(m/60)+' h '+m%60+' min')+' '+how)+' · '+d}
+const gq=p=>encodeURIComponent(p.name+', '+(p.area?p.area+', ':'')+X().title);
+const gm=p=>'https://www.google.com/maps/search/?api=1&query='+gq(p);
+const gd=p=>'https://www.google.com/maps/dir/?api=1&destination='+gq(p)+'&travelmode='+({car:'driving',transit:'transit',walk:'walking'}[T.prof.move]);
+function score(p,d=day){if(st(p,d)==='c')return -99;let s=2;const I=T.prof.ints;p.tags.forEach(t=>{if(I.some(i=>t.includes(i)||i.includes(t)))s+=2.5});if(I.some(i=>p.cat.includes(i)))s+=1.5;
+ if(T.prof.who.some(w=>w.startsWith('kid')))s+=p.kid*1.4;const lvl={easy:0,mod:2,strong:3}[T.prof.walk];if(p.effort>lvl)s-=3.5*(p.effort-lvl);
+ const m=mins(p);if(m!=null)s-=m/30;if(st(p,d)==='l')s-=.6;return s}
+function localNow(){try{return new Date(new Date().toLocaleString('en-US',{timeZone:X().tz||undefined}))}catch(e){return new Date()}}
+const hm=s=>{const m=String(s).match(/(\d{1,2}):(\d{2})/);return m?+m[1]+m[2]/60:null};
+const fmtT=t=>{if(!t)return'—';const[h,m]=t.split(':').map(Number);return((h+11)%12+1)+':'+String(m).padStart(2,'0')+(h<12?' am':' pm')};
+
+/* ---------- open app ---------- */
+const TABS=[['today','Today','M3 10h18M5 6h14M7 14h10M9 18h6'],['map','Map','M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14'],['plan','Plan','M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01'],['eat','Eat','M7 3v8a2 2 0 0 0 4 0V3M9 11v10M17 3c-2 2-2 6 0 8v10'],['kids','Kids','M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.6 7.1 18.2l.9-5.5-4-3.9L9.5 8z'],['ask','Claude','M4 5h16v11H8l-4 4z'],['safe','Safety','M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z'],['pack','Pack','M4 8h16v12H4zM9 8V5h6v3'],['local','Local','M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11zM12 12a2 2 0 1 0 0-4 2 2 0 0 0 0 4']];
+$('tabs').innerHTML=TABS.map(([k,n,d])=>`<button role="tab" data-t="${k}" aria-selected="${k==='today'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>${n}</button>`).join('');
+function go(t){tab=t;document.querySelectorAll('.tab').forEach(s=>s.classList.toggle('on',s.id==='t-'+t));document.querySelectorAll('nav.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.t===t));window.scrollTo({top:0})}
+$('tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b)go(b.dataset.t)});
+function openApp(){$('setup').hidden=true;$('app').hidden=false;delete $('setupForm').dataset.edit;$('chat').innerHTML='';bubble('a','Hi! I know everything in your '+X().title+' guide. Ask me what to do, where to eat, what\'s open, or to plan a day.');(T.chat||[]).forEach(m=>bubble(m.role==='user'?'u':'a',m.content));renderTripSel();renderAll();go('today')}
+function openSetup(edit){$('app').hidden=true;$('setup').hidden=false;$('progress').hidden=true;$('cancelSetup').hidden=!T;
+ if(edit&&T){fillForm(T.prof);$('setupForm').dataset.edit=T.id;$('buildBtn').textContent='Rebuild guide'}else{delete $('setupForm').dataset.edit;$('buildBtn').textContent='Build my guide';$('fDest').value=''}
+ $('hDest').textContent=edit&&T?X().title:'Where are you going?';$('hSub').textContent='Pick a place in the world and Claude builds your guide.';window.scrollTo({top:0})}
+function renderTripSel(){const ids=Object.keys(trips).sort((a,b)=>trips[b].created-trips[a].created);$('tripSel').innerHTML=ids.map(i=>`<option value="${esc(i)}" ${T&&i===T.id?'selected':''}>${esc(trips[i].data.title||trips[i].prof.dest)} · ${esc(trips[i].days[0]?.md||'')}</option>`).join('')+'<option value="__new">+ New trip</option>';$('tripSel').hidden=!ids.length}
+$('tripSel').addEventListener('change',e=>{const v=e.target.value;if(v==='__new'){openSetup(false);return}T=trips[v];day=0;LS.set('cur',v);openApp()});
+$('editTrip').addEventListener('click',()=>openSetup(true));$('regen').addEventListener('click',()=>openSetup(true));$('newTrip2').addEventListener('click',()=>openSetup(false));
+let delArm=false;$('delTrip').addEventListener('click',()=>{if(!delArm){delArm=true;$('delNote').textContent='Tap Delete again to remove this trip from this phone.';setTimeout(()=>{delArm=false;$('delNote').textContent=''},5000);return}
+ delete trips[T.id];LS.set('trips',trips);const ids=Object.keys(trips);T=ids.length?trips[ids[0]]:null;LS.set('cur',T?T.id:null);delArm=false;$('delNote').textContent='';if(T)openApp();else{renderTripSel();openSetup(false)}});
+
+/* ---------- render ---------- */
+function renderAll(){renderHere();renderHead();renderDays();renderToday();renderMap();renderList();renderPlan();renderEat();renderKids();renderSafety();renderPack();renderLocal()}
+function renderHead(){$('hk').textContent=(X().country||'TRIP GUIDE').toUpperCase()+' · '+T.prof.lodge.toUpperCase();$('hDest').textContent=X().title||T.prof.dest;$('hSub').textContent=D()[0].md+' – '+D()[D().length-1].md+' · staying near '+(T.prof.base||base().name)}
+function renderDays(){$('days').innerHTML=D().map((d,i)=>`<button data-d="${i}" aria-pressed="${i===day}">${esc(d.wd)}<small>${esc(d.md)}</small></button>`).join('');document.querySelectorAll('.dname').forEach(e=>e.textContent=D()[day].full)}
+$('days').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;day=+b.dataset.d;renderAll()});
+function placeCard(p){const s=st(p),inPlan=(T.plan[day]||[]).some(x=>x.id===p.id);
+ return `<div class="card"><div class="row sp"><h3>${esc(p.name)}</h3><span class="pill ${CL[s]}">${SL[s]}</span></div>
+ <div class="row small mut">${p.area?`<span>${esc(p.area)}</span>`:''}${s!=='c'?`<span>· ${esc(travel(p))}</span>`:''}${p.dur?`<span>· ~${p.dur<1?Math.round(p.dur*60)+' min':esc(p.dur)+' h'}</span>`:''}</div>
+ <p class="small" style="margin:6px 0">${esc(p.about)}</p>${p.note&&s!=='o'?`<div class="small" style="color:var(--amber);font-weight:700">${esc(p.note)}</div>`:''}
+ <div class="small mut">${p.hours?'Hours (typical): '+esc(p.hours):''}${p.price?' · '+esc(p.price):''}</div>${p.tip?`<div class="small mut">Tip: ${esc(p.tip)}</div>`:''}
+ <div class="row" style="margin:6px 0">${p.tags.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>
+ ${s!=='c'?`<div class="row"><a class="btn pri" target="_blank" rel="noopener" href="${gd(p)}">Directions</a><a class="btn" target="_blank" rel="noopener" href="${gm(p)}">Google Maps</a><button class="btn" data-add="${esc(p.id)}">${inPlan?'✓ In plan':'Add to plan'}</button></div>`:''}</div>`}
+document.addEventListener('click',e=>{const a=e.target.closest('[data-add]');if(!a||!T)return;addPlan(day,a.dataset.add);renderAll()});
+
+function renderToday(){const x=X(),w=x.weather[day]||{};
+ $('summary').textContent=x.summary;
+ $('alerts').innerHTML='<h3>Heads up</h3><ul class="small" style="margin:6px 0 0;padding-left:18px">'+x.alerts.map(a=>'<li>'+esc(a)+'</li>').join('')+'<li>Hours and closures here are typical for these dates. Confirm anything important before you go.</li></ul>';
+ $('wxHi').textContent=tmp(w.hi);$('wxCond').textContent=(w.cond||'')+(isFinite(w.p)?' · '+w.p+'% precip':'');$('wxLo').textContent='Low '+tmp(w.lo)+' · '+D()[day].full;
+ $('wxStrip').innerHTML=D().map((d,i)=>{const v=x.weather[i]||{};return`<div class="${i===day?'sel':''}"><div class="small">${esc(d.wd)}</div><b>${tmp(v.hi)}</b><div class="small mut">${tmp(v.lo)}</div></div>`}).join('');
+ $('wxNote').textContent=x.climate+' These are typical temperatures for the season, not a forecast.';
+ const b=base();$('wxLink').href='https://www.google.com/search?q='+encodeURIComponent('weather '+x.title);
+ const picks=P().filter(p=>st(p)!=='c').sort((a,b)=>score(b)-score(a)).slice(0,6);$('picks').innerHTML=picks.map(placeCard).join('');
+ const cl=P().filter(p=>st(p)!=='o').concat(x.food.filter(f=>st(f)!=='o'));
+ $('closedList').innerHTML=cl.length?cl.map(p=>`<div class="card"><div class="row sp"><b>${esc(p.name)}</b><span class="pill ${CL[st(p)]}">${SL[st(p)]}</span></div><div class="small mut">${esc(p.note||p.hours||'')}</div></div>`).join(''):'<p class="small mut">Everything in your guide is normally open this day.</p>';
+ tick()}
+function tick(){if(!T||$('app').hidden)return;const x=X(),n=localNow(),h=n.getHours()+n.getMinutes()/60,sr=hm(x.sun.rise)??7,ss=hm(x.sun.set)??18;
+ let v,l;if(h<sr){v=Math.floor(sr-h)+'h '+Math.round((sr-h)%1*60)+'m';l='until sunrise'}else if(h<ss){v=Math.floor(ss-h)+'h '+Math.round((ss-h)%1*60)+'m';l='of daylight left'}else{v='Dark';l='after sunset'}
+ $('dlLeft').textContent=v;$('dlLbl').textContent=l;
+ $('sunTxt').textContent='Sunrise about '+(x.sun.rise||'?')+' · sunset about '+(x.sun.set||'?')+' · local time now '+n.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+(x.tz?' ('+x.tz+')':'')+'.';
+ const open=P().filter(p=>st(p)!=='c').sort((a,b)=>score(b)-score(a));const fd=x.food.filter(f=>st(f)!=='c');
+ const pick=(arr,f)=>arr.find(f)||arr[0];let r;
+ if(h<9)r='Early start: beat the crowds at '+(open[0]?.name||'a top sight')+'.';
+ else if(h<11.5)r='Prime time for a big outing: '+(pick(open,p=>p.dur>=1.5)?.name||open[0]?.name||'')+'.';
+ else if(h<14)r='Lunch time: try '+(fd[0]?.name||'a local spot')+', then '+(open[1]?.name||'a nearby sight')+'.';
+ else if(h<ss-.5)r='Afternoon: '+(pick(open,p=>p.tags.includes('views')||p.tags.includes('photo'))?.name||open[2]?.name||'')+' is a good finish before sunset.';
+ else r='Evening: dinner at '+(pick(fd,f=>f.price.length>=2)?.name||fd[0]?.name||'a local favorite')+', then rest up. Keep valuables close after dark.';
+ $('rightNow').textContent=r}
+setInterval(()=>{try{tick()}catch(e){}},60000);
+
+/* map */
+function renderMap(){const pts=P().concat(X().food.filter(f=>isFinite(f.lat))),b=base();const all=pts.concat([b]);
+ let la=[Math.min(...all.map(p=>p.lat)),Math.max(...all.map(p=>p.lat))],lo=[Math.min(...all.map(p=>p.lng)),Math.max(...all.map(p=>p.lng))];
+ const pad=Math.max((la[1]-la[0]),(lo[1]-lo[0])*.7,.01)*.12;la=[la[0]-pad,la[1]+pad];lo=[lo[0]-pad,lo[1]+pad];
+ const k=Math.cos((la[0]+la[1])/2*Math.PI/180),W=400,H=Math.max(220,Math.min(560,W*(la[1]-la[0])/((lo[1]-lo[0])*k)));
+ const pr=(lat,lng)=>[(lng-lo[0])/(lo[1]-lo[0])*W,(la[1]-lat)/(la[1]-la[0])*H];
+ const col={o:'#1d9a58',l:'#d99400',c:'#d63c26'};let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Map of places in your guide">`;
+ for(let i=1;i<4;i++)s+=`<line x1="${W*i/4}" y1="0" x2="${W*i/4}" y2="${H}" stroke="currentColor" opacity=".07"/><line x1="0" y1="${H*i/4}" x2="${W}" y2="${H*i/4}" stroke="currentColor" opacity=".07"/>`;
+ const[bx,by]=pr(b.lat,b.lng);P().forEach(p=>{const[x,y]=pr(p.lat,p.lng);s+=`<line x1="${bx}" y1="${by}" x2="${x}" y2="${y}" stroke="currentColor" opacity=".08"/>`});
+ X().food.filter(f=>isFinite(f.lat)).forEach(f=>{const[x,y]=pr(f.lat,f.lng);s+=`<g data-pin="${esc(f.id)}" style="cursor:pointer" role="button" tabindex="0" aria-label="${esc(f.name)}"><circle cx="${x}" cy="${y}" r="12" fill="transparent"/><rect x="${x-4.5}" y="${y-4.5}" width="9" height="9" rx="2" fill="${col[st(f)]}" stroke="#fff" stroke-width="1.5"/></g>`});
+ P().forEach(p=>{const[x,y]=pr(p.lat,p.lng);s+=`<g data-pin="${esc(p.id)}" style="cursor:pointer" role="button" tabindex="0" aria-label="${esc(p.name)}, ${SL[st(p)]}"><circle cx="${x}" cy="${y}" r="13" fill="transparent"/><circle cx="${x}" cy="${y}" r="6.5" fill="${col[st(p)]}" stroke="#fff" stroke-width="2"/></g>`});
+ if(T.here){const[hx,hy]=pr(T.here.lat,T.here.lng);if(hx>=0&&hx<=W&&hy>=0&&hy<=H)s+=`<circle cx="${hx}" cy="${hy}" r="11" fill="#2f7de1" opacity=".25"/><circle cx="${hx}" cy="${hy}" r="5.5" fill="#2f7de1" stroke="#fff" stroke-width="2"/>`}
+ s+=`<text x="${bx}" y="${by+7}" text-anchor="middle" font-size="22" fill="#f0643a" stroke="#fff" stroke-width=".8">★</text>`;
+ const kmW=km({lat:la[0],lng:lo[0]},{lat:la[0],lng:lo[1]});const sc=us()?kmW*.621:kmW;s+=`<text x="${W-8}" y="${H-8}" text-anchor="end" font-size="11" fill="currentColor" opacity=".6">map width ≈ ${sc<10?sc.toFixed(1):Math.round(sc)} ${us()?'mi':'km'} · ■ food</text></svg>`;
+ $('mapFig').innerHTML=s;$('mapFig').style.color='var(--ink)';$('gmArea').href='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(X().title)}
+$('mapFig').addEventListener('click',e=>{const g=e.target.closest('[data-pin]');if(!g)return;const id=g.dataset.pin;const p=P().find(x=>x.id===id);$('mapCard').innerHTML=p?placeCard(p):foodCard(X().food.find(f=>f.id===id));$('mapCard').scrollIntoView({behavior:'smooth',block:'nearest'})});
+$('mapFig').addEventListener('keydown',e=>{if(e.key==='Enter'){const g=e.target.closest('[data-pin]');if(g)g.dispatchEvent(new MouseEvent('click',{bubbles:true}))}});
+const CATS=[['all','All'],['sight','Sights'],['nature','Nature'],['museum','Museums'],['walk','Walks'],['kids','Kids'],['shopping','Shopping'],['night','Night'],['daytrip','Day trips']];
+function renderList(){const have=new Set(P().map(p=>p.cat));$('catSeg').innerHTML=CATS.filter(([k])=>k==='all'||have.has(k)).map(([k,n])=>`<button data-c="${k}" aria-pressed="${k===cat}">${n}</button>`).join('');
+ $('allList').innerHTML=P().filter(p=>cat==='all'||p.cat===cat).sort((a,b)=>(st(a)==='c')-(st(b)==='c')||(mins(a)??0)-(mins(b)??0)).map(placeCard).join('')}
+$('catSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;cat=b.dataset.c;renderList()});
+
+/* plan */
+function addPlan(d,id,time){const p=P().find(x=>x.id===id);if(!p)return'unknown id';if(st(p,d)==='c')return'closed that day';const L=T.plan[d]=T.plan[d]||[];if(L.some(x=>x.id===id))return'already in plan';L.push({id,time:time||''});L.sort((a,b)=>(a.time||'99').localeCompare(b.time||'99'));saveT();return'ok'}
+function autoPlan(d){const n={relax:3,bal:4,packed:6}[T.prof.pace],used=Object.entries(T.plan).filter(([k])=>+k!==d).flatMap(([,v])=>v.map(x=>x.id));
+ const cand=P().filter(p=>st(p,d)!=='c').map(p=>({p,s:score(p,d)-(used.includes(p.id)?4:0)})).sort((a,b)=>b.s-a.s);if(!cand.length)return[];
+ const first=cand[0].p,lim={car:25,transit:8,walk:3}[T.prof.move];let pick=[first].concat(cand.slice(1).filter(c=>km(first,c.p)<lim&&c.s>-2).slice(0,n-1).map(c=>c.p));
+ const order=[pick.shift()];while(pick.length){const last=order[order.length-1];pick.sort((a,b)=>km(last,a)-km(last,b));order.push(pick.shift())}
+ let t=9.5,lunch=false;const out=[];order.forEach(p=>{if(t>=12&&!lunch){lunch=true;t+=1}if(t>19)return;out.push({id:p.id,time:String(Math.floor(t)).padStart(2,'0')+':'+(t%1>=.5?'30':'00')});t+=Math.ceil((Math.max(.5,p.dur)+.5)*2)/2});
+ T.plan[d]=out;saveT();return out}
+function renderPlan(){const L=T.plan[day]||[];$('planEmpty').style.display=L.length?'none':'block';
+ $('planList').innerHTML=L.map((x,i)=>{const p=P().find(q=>q.id===x.id);if(!p)return'';return`<li><input type="time" value="${esc(x.time)}" data-tm="${i}" aria-label="Time for ${esc(p.name)}" style="padding:6px;min-height:40px"><div><b>${esc(p.name)}</b><div class="small mut">${esc(travel(p))} <span class="pill ${CL[st(p)]}" style="padding:0 6px">${SL[st(p)]}</span></div></div><div class="row" style="flex-wrap:nowrap"><a class="btn" target="_blank" rel="noopener" href="${gd(p)}">Go</a><button class="btn" data-rm="${i}" aria-label="Remove">✕</button></div></li>`}).join('')}
+$('planList').addEventListener('change',e=>{const i=e.target.dataset.tm;if(i==null)return;T.plan[day][i].time=e.target.value;T.plan[day].sort((a,b)=>(a.time||'99').localeCompare(b.time||'99'));saveT();renderPlan()});
+$('planList').addEventListener('click',e=>{const b=e.target.closest('[data-rm]');if(!b)return;T.plan[day].splice(+b.dataset.rm,1);saveT();renderAll()});
+$('autoPlan').addEventListener('click',()=>{autoPlan(day);renderAll()});
+$('copyPlan').addEventListener('click',async()=>{const L=T.plan[day]||[];const txt=X().title+' · '+D()[day].full+'\n'+L.map(x=>{const p=P().find(q=>q.id===x.id);return p?fmtT(x.time)+'  '+p.name+'  '+gm(p):''}).join('\n');try{await navigator.clipboard.writeText(txt);$('copyPlan').textContent='Copied ✓'}catch(e){$('copyPlan').textContent='Copy blocked'}setTimeout(()=>$('copyPlan').textContent='Copy plan',2000)});
+$('notes').addEventListener('input',e=>{T.notes=e.target.value;saveT()});$('sosCard').addEventListener('input',e=>{T.sos=e.target.value;saveT()});
+
+/* eat / kids */
+function foodCard(f){if(!f)return'';const s=st(f);return`<div class="card"><div class="row sp"><h3>${esc(f.name)}</h3><span class="pill ${CL[s]}">${SL[s]}</span></div><div class="row small mut"><span>${esc(f.type)}</span><span>· ${esc(f.price)}</span>${f.area?`<span>· ${esc(f.area)}</span>`:''}${isFinite(f.lat)&&s!=='c'?`<span>· ${esc(travel(f))}</span>`:''}</div><p class="small" style="margin:6px 0">${esc(f.about)}</p><div class="small mut">${f.hours?'Hours (typical): '+esc(f.hours):''}${f.kid?' · kid-friendly':''}</div>${s!=='c'?`<div class="row" style="margin-top:6px"><a class="btn pri" target="_blank" rel="noopener" href="${gd(f)}">Directions</a></div>`:''}</div>`}
+function renderEat(){$('eatList').innerHTML=X().food.slice().sort((a,b)=>(st(a)==='c')-(st(b)==='c')).map(foodCard).join('')}
+function renderKids(){$('kidList').innerHTML=X().kids.map(k=>{const p=k.place&&P().find(x=>x.id===k.place);const s=p?st(p):null;return`<div class="card"><div class="row sp"><h3>${esc(k.name)}</h3>${p?`<span class="pill ${CL[s]}">${SL[s]}</span>`:''}</div><p class="small" style="margin:6px 0">${esc(k.about)}</p>${p&&s!=='c'?`<div class="row"><a class="btn" target="_blank" rel="noopener" href="${gd(p)}">Directions</a><button class="btn" data-add="${esc(p.id)}">Add to plan</button></div>`:''}</div>`}).join('');
+ const B=X().bingo.length>=16?X().bingo:X().bingo.concat(['A bird','A bridge','A dog','A flag','A statue','Something red','A bus','A tower','A street musician','A boat','A clock','A fountain','A map','A bike','A tree','A bench']).slice(0,16);
+ if(!T.bingo||T.bingo.cells.length!==16){T.bingo={cells:B.slice().sort(()=>Math.random()-.5),on:[]};saveT()}
+ $('bingo').innerHTML=T.bingo.cells.map((c,i)=>`<button data-b="${i}" aria-pressed="${T.bingo.on.includes(i)}">${esc(c)}</button>`).join('');
+ const on=T.bingo.on,L=[];for(let i=0;i<4;i++){L.push([0,1,2,3].map(j=>i*4+j));L.push([0,1,2,3].map(j=>j*4+i))}L.push([0,5,10,15],[3,6,9,12]);$('bingoWin').textContent=L.some(l=>l.every(x=>on.includes(x)))?'BINGO! Treat time 🎉':on.length+' of 16 spotted'}
+$('bingo').addEventListener('click',e=>{const b=e.target.closest('[data-b]');if(!b)return;const i=+b.dataset.b,on=T.bingo.on;on.includes(i)?on.splice(on.indexOf(i),1):on.push(i);saveT();renderKids()});
+$('bingoReset').addEventListener('click',()=>{T.bingo=null;renderKids()});
+
+/* safety / pack / local */
+function renderSafety(){const E=X().emer||{};const tel=v=>String(v||'').replace(/[^\d+]/g,'');
+ $('sosNum').textContent='Emergency: '+(E.number||'see below');$('sosTxt').textContent=[E.police&&'Police '+E.police,E.ambulance&&'Ambulance '+E.ambulance,E.fire&&'Fire '+E.fire,E.other,E.notes].filter(Boolean).join(' · ')+' Double-check the number when you arrive.';
+ $('sosBtns').innerHTML=tel(E.number)?`<a class="btn cor" href="tel:${tel(E.number)}">Call ${esc(E.number)}</a>`:'';
+ $('sosCard').value=T.sos||'';$('notes').value=T.notes||'';
+ $('safetyList').innerHTML=X().safety.map((s,i)=>`<details class="card" ${i<2?'open':''}><summary><h3>${esc(s.t)}</h3></summary><ul class="small" style="padding-left:18px">${s.i.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></details>`).join('')}
+function groups(){const g=(pk==='pack'?X().pack:X().gear).map(x=>[x.t,x.i]);if(pk==='pack'&&T.custom.length)g.push(['My items',T.custom]);return g}
+function renderPack(){let all=0,done=0;$('packList').innerHTML=groups().map(([g,a])=>`<div class="card"><h3>${esc(g)}</h3><ul class="chk">${a.map(t=>{const k=pk+':'+t,c=!!T.check[k];all++;if(c)done++;return`<li class="${c?'done':''}"><input type="checkbox" id="pk${all}" data-k="${esc(k)}" ${c?'checked':''}><label for="pk${all}"><span>${esc(t)}</span></label></li>`}).join('')}</ul></div>`).join('');
+ $('packCount').textContent=done+' of '+all+' packed';$('packBar').style.width=(all?done/all*100:0)+'%';$('packAdd').style.display=pk==='pack'?'flex':'none'}
+$('packList').addEventListener('change',e=>{const k=e.target.dataset.k;if(!k)return;T.check[k]=e.target.checked;saveT();renderPack()});
+$('packSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;pk=b.dataset.p;$('packSeg').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));renderPack()});
+$('packClear').addEventListener('click',()=>{Object.keys(T.check).forEach(k=>{if(k.startsWith(pk+':'))delete T.check[k]});saveT();renderPack()});
+$('packAdd').addEventListener('submit',e=>{e.preventDefault();const v=$('packIn').value.trim();if(v&&!T.custom.includes(v)){T.custom.push(v);saveT()}$('packIn').value='';renderPack()});
+function renderLocal(){const x=X();$('localList').innerHTML=(x.currency?`<div class="card"><b>Currency:</b> ${esc(x.currency)}${x.tz?` · <b>Time zone:</b> ${esc(x.tz)}`:''}</div>`:'')+x.local.map(s=>`<div class="card"><h3>${esc(s.t)}</h3><ul class="small" style="padding-left:18px">${s.i.map(i=>`<li>${esc(i)}</li>`).join('')}</ul></div>`).join('')}
+
+/* ---------- Claude chat ---------- */
+const SUGG=['What should we do tomorrow?','Plan day 1 for us','Where should we eat tonight?','Is anything closed on our dates?','What are good rainy-day backups?'];
+$('sugg').innerHTML=SUGG.map(s=>`<button type="button" data-s="${esc(s)}" aria-pressed="false">${esc(s)}</button>`).join('');
+$('sugg').addEventListener('click',e=>{const b=e.target.closest('[data-s]');if(b){$('askIn').value=b.dataset.s;$('askForm').requestSubmit()}});
+function bubble(c,t){const d=document.createElement('div');d.className='msg '+c;d.textContent=t;$('chat').appendChild(d);$('chat').scrollTop=1e6;return d}
+const dIdx=v=>{const i=Number(v);if(Number.isInteger(i)&&i>=0&&i<D().length)return i;const j=D().findIndex(d=>d.iso===String(v));return j>=0?j:day};
+const brief=(p,d)=>({id:p.id,name:p.name,cat:p.cat,area:p.area,status:SL[st(p,d)],note:p.note,hours_typical:p.hours,price:p.price,travel_from_stay:travel(p),visit_hours:p.dur,effort_0to3:p.effort,kid_0to3:p.kid,tags:p.tags,about:p.about,tip:p.tip});
+const TOOLS=[
+ {name:'set_current_spot',description:'Set where the family is right now: a place or food id, "stay", or lat/lng. Travel times and picks then measure from there.',inputSchema:{type:'object',properties:{id:{type:'string'},lat:{type:'number'},lng:{type:'number'}}},execute:({id,lat,lng})=>{if(id==='stay')T.here=null;else if(id){const x=P().find(q=>q.id===id)||X().food.find(q=>q.id===id);if(!x||!isFinite(x.lat))throw new Error('unknown id');T.here={key:x.id,name:x.name,lat:x.lat,lng:x.lng}}else if(isFinite(+lat)&&isFinite(+lng))T.here={name:'Spot set by Claude',lat:+lat,lng:+lng};saveT();renderAll();return{ok:true,now:org()}}},
+ {name:'get_trip',description:'Trip setup (destination, dates with day indexes, where they stay, group, interests, walking, transport, pace, units, notes), selected day, local time, plans for every day, trip notes.',inputSchema:{type:'object',properties:{}},execute:()=>({profile:T.prof,current_spot:T.here||'at their stay',days:D().map((d,i)=>({index:i,date:d.iso,label:d.full})),selected_day:day,stay:base(),local_time:localNow().toLocaleString('en-US'),timezone:X().tz,plans:Object.fromEntries(Object.entries(T.plan).map(([k,v])=>[k,v.map(x=>({id:x.id,time:x.time,name:P().find(p=>p.id===x.id)?.name}))])),notes:T.notes,current_tab:tab})},
+ {name:'get_places',description:'All places in the guide with status for a day index, typical hours, travel time from where they stay, tags and tips.',inputSchema:{type:'object',properties:{day:{type:'integer'}}},execute:({day:d})=>P().map(p=>brief(p,dIdx(d??day)))},
+ {name:'get_food',description:'Restaurants/food spots with status for a day index, price, hours and travel time.',inputSchema:{type:'object',properties:{day:{type:'integer'}}},execute:({day:d})=>X().food.map(f=>({id:f.id,name:f.name,type:f.type,area:f.area,price:f.price,hours_typical:f.hours,about:f.about,kid_friendly:f.kid,status:SL[st(f,dIdx(d??day))],travel:travel(f)}))},
+ {name:'get_info',description:'Typical weather per day (Celsius, climate normals), sunrise/sunset, alerts, emergency numbers, safety sections, local tips, kid activities, currency.',inputSchema:{type:'object',properties:{}},execute:()=>({alerts:X().alerts,weather_c:X().weather.map((w,i)=>({day:i,...w})),climate:X().climate,sun:X().sun,emergency:X().emer,safety:X().safety,local:X().local,kids:X().kids,currency:X().currency})},
+ {name:'get_packing',description:'Pack list and gear list with packed status.',inputSchema:{type:'object',properties:{}},execute:()=>({pack:X().pack.map(g=>({group:g.t,items:g.i.map(t=>({item:t,packed:!!T.check['pack:'+t]}))})),gear:X().gear.map(g=>({group:g.t,items:g.i.map(t=>({item:t,packed:!!T.check['gear:'+t]}))})),custom:T.custom})},
+ {name:'add_to_plan',description:'Add a place id to a day index plan with optional 24h time "HH:MM". Returns ok or why not.',inputSchema:{type:'object',properties:{day:{type:'integer'},id:{type:'string'},time:{type:'string'}},required:['day','id']},execute:({day:d,id,time})=>{const r=addPlan(dIdx(d),String(id),time?String(time).slice(0,5):'');renderAll();return r}},
+ {name:'remove_from_plan',description:'Remove a place id from a day index plan.',inputSchema:{type:'object',properties:{day:{type:'integer'},id:{type:'string'}},required:['day','id']},execute:({day:d,id})=>{const i=dIdx(d);T.plan[i]=(T.plan[i]||[]).filter(x=>x.id!==String(id));saveT();renderAll();return'ok'}},
+ {name:'auto_plan_day',description:'Replace a day index plan with the app\'s automatic plan for the group.',inputSchema:{type:'object',properties:{day:{type:'integer'}},required:['day']},execute:({day:d})=>{const o=autoPlan(dIdx(d));renderAll();return o}},
+ {name:'add_place',description:'Add a new real place to the guide and map (use when the family asks for something the guide lacks). status: one of o/l/c per day.',inputSchema:{type:'object',properties:{name:{type:'string'},cat:{type:'string'},area:{type:'string'},lat:{type:'number'},lng:{type:'number'},hours:{type:'string'},about:{type:'string'},tip:{type:'string'},dur:{type:'number'},tags:{type:'array',items:{type:'string'}},status:{type:'array',items:{type:'string'}}},required:['name','lat','lng','about']},
+  execute:(a)=>{const lat=Number(a.lat),lng=Number(a.lng);if(!isFinite(lat)||!isFinite(lng))throw new Error('lat/lng must be numbers');const id=String(a.name).toLowerCase().replace(/[^a-z0-9]+/g,'-').slice(0,36)+'-'+Date.now().toString(36).slice(-3);
+  const s=arr(a.status);P().push({id,name:String(a.name),cat:String(a.cat||'sight'),area:String(a.area||''),lat,lng,hours:String(a.hours||''),price:'',dur:num(a.dur,1),effort:1,kid:1,tags:arr(a.tags).map(String).slice(0,6),about:String(a.about),tip:String(a.tip||''),status:D().map((_,i)=>['o','l','c'].includes(s[i])?s[i]:'l'),note:'Added by Claude: confirm hours'});saveT();renderAll();return{ok:true,id}}},
+ {name:'set_pack_item',description:'Check/uncheck a pack ("pack") or gear ("gear") item by exact text; unknown text on "pack" is added as a custom item.',inputSchema:{type:'object',properties:{list:{type:'string',enum:['pack','gear']},item:{type:'string'},packed:{type:'boolean'}},required:['list','item','packed']},execute:({list,item,packed})=>{const L=list==='gear'?'gear':'pack',it=String(item);if(L==='pack'&&!X().pack.some(g=>g.i.includes(it))&&!T.custom.includes(it))T.custom.push(it);T.check[L+':'+it]=!!packed;saveT();renderPack();return'ok'}},
+ {name:'open_tab',description:'Switch the app view: today, map, plan, eat, kids, ask, safe, pack, local; optional day index.',inputSchema:{type:'object',properties:{tab:{type:'string'},day:{type:'integer'}}},execute:({tab:t,day:d})=>{if(d!=null){day=dIdx(d);renderAll()}if(TABS.some(x=>x[0]===t))go(t);return'ok'}}];
+function rules(){return `You are Claude inside a family's travel-guide app for ${X().title} (${D()[0].full} to ${D()[D().length-1].full}). Use the tools to read the app's data before answering about places, status, food, weather, safety or plans. The guide's hours and statuses are typical, not live, so say so for anything time-critical and suggest confirming with official sources. You cannot browse the web. Put safety first (kids, weather, traffic, scams). Keep replies short and phone-friendly: plain text, short lines, no tables. If asked to plan or change things, use the tools, then say exactly what you changed. Units: ${us()?'°F and miles':'°C and km'}. The family's message follows.`}
+(async()=>{try{sample=await claude.use('sample')}catch(e){sample=null}if(!sample){$('askNote').textContent='Claude chat works when this app is opened inside Claude.';$('setupNote').textContent='Building a new guide needs Claude: open the Claude version, build your trip, tap Copy trip on its Local tab, then import it below.'}})();
+$('stopBtn').addEventListener('click',()=>ctl&&ctl.abort());
+$('askForm').addEventListener('submit',async e=>{e.preventDefault();const q=$('askIn').value.trim();if(!q||busy||!T)return;
+ if(!sample){bubble('t','Claude isn\'t connected in this view.');return}
+ busy=true;$('askBtn').disabled=true;$('stopBtn').hidden=false;$('askIn').value='';bubble('u',q);T.chat=(T.chat||[]).concat({role:'user',content:q}).slice(-14);
+ const msgs=[{role:'user',content:rules()}].concat(T.chat);while(msgs.length>1&&msgs[1].role!=='user')msgs.splice(1,1);
+ const out=bubble('a','Thinking…');ctl=new AbortController();
+ try{const r=await sample(msgs,{tools:TOOLS,cache:false,signal:ctl.signal,onText:({text})=>{out.textContent=text;$('chat').scrollTop=1e6}});out.textContent=r.text;T.chat.push({role:'assistant',content:r.text})}
+ catch(err){const c=err&&err.code;if(err&&err.text)out.textContent=err.text;else out.textContent=c==='cancelled'?'Stopped.':c==='rate_limited'?'Claude is busy or you\'ve hit a usage limit — try again later.':c==='not_granted'?'Claude access wasn\'t allowed for this page.':'Sorry, something went wrong. Try again.';T.chat.pop()}
+ saveT();busy=false;$('askBtn').disabled=false;$('stopBtn').hidden=true});
+
+
+function renderHere(){const b=base(),opts=[['__base','At '+(T.prof.base||b.name)]].concat(P().filter(p=>st(p)!=='c').map(p=>[p.id,p.name]),X().food.filter(f=>isFinite(f.lat)&&st(f)!=='c').map(f=>[f.id,f.name]));
+ const cur=T.here?(T.here.key||'__custom'):'__base';if(cur==='__custom')opts.push(['__custom','Pasted spot ('+T.here.lat.toFixed(4)+', '+T.here.lng.toFixed(4)+')']);if(cur==='__gps')opts.push(['__gps','📍 My GPS location (live)']);
+ $('hereSel').innerHTML=opts.map(([v,n])=>`<option value="${esc(v)}" ${v===cur?'selected':''}>${esc(n)}</option>`).join('');$('hereTag').textContent=T.here?'out and about':'at your stay'}
+$('hereSel').addEventListener('change',e=>{const v=e.target.value;if(v!=='__gps'&&gpsWatch!=null){navigator.geolocation.clearWatch(gpsWatch);gpsWatch=null;$('gpsBtn').textContent='🛰️ Use my phone\'s GPS'}if(v==='__base')T.here=null;else if(v==='__custom'||v==='__gps')return;else{const x=P().find(q=>q.id===v)||X().food.find(q=>q.id===v);if(x)T.here={key:x.id,name:x.name,lat:x.lat,lng:x.lng}}saveT();renderAll()});
+$('hereForm').addEventListener('submit',e=>{e.preventDefault();if(gpsWatch!=null){navigator.geolocation.clearWatch(gpsWatch);gpsWatch=null;$('gpsBtn').textContent='🛰️ Use my phone\'s GPS'}const v=$('hereIn').value.trim(),ll=parseLL(v);
+ if(!ll){$('hereNote').textContent=/goo\.gl|maps\.app/.test(v)?'Short share links can\'t be read here. In Google Maps, tap your blue dot and copy the coordinates instead.':'Couldn\'t find coordinates. Paste numbers like 35.0036, 135.7681.';return}
+ T.here={name:'Pasted spot',lat:ll.lat,lng:ll.lng};$('hereIn').value='';saveT();renderAll()});
+
+$('shareHere').addEventListener('click',()=>{const o=org(),name=T.here?T.here.name:'where we are staying ('+(T.prof.base||base().name)+')';go('ask');$('askIn').value='📍 We are at '+name+' right now (coordinates '+o.lat.toFixed(4)+', '+o.lng.toFixed(4)+'). Based on where we are, the current time, the weather and what is open today, what should we do next nearby? Give 2-3 options with travel times.';$('askForm').requestSubmit()});
+
+let gpsWatch=null,gpsLast=0;
+function gpsOk(pos){const c=pos.coords,prev=T.here;T.here={key:'__gps',name:'My GPS location',lat:c.latitude,lng:c.longitude,gps:true,acc:Math.round(c.accuracy)};saveT();const moved=!prev||!prev.gps||Math.abs(prev.lat-c.latitude)+Math.abs(prev.lng-c.longitude)>.002;
+ $('gpsBtn').textContent='🛰️ GPS on · ±'+Math.round(c.accuracy)+' m';$('hereNote').textContent='Live GPS is on: your spot updates as you move while the app is open.';if(moved||Date.now()-gpsLast>120000){gpsLast=Date.now();renderAll()}}
+function gpsErr(e){if(gpsWatch!=null){try{navigator.geolocation.clearWatch(gpsWatch)}catch(_){}gpsWatch=null}$('gpsBtn').textContent='🛰️ Use my phone\'s GPS';
+ $('hereNote').textContent=e&&e.code===1?'GPS is blocked here. Inside Claude, pages are not allowed to read location even if you allow it. Paste your spot from Google Maps instead, or use the GPS website copy of this app.':e&&e.code===3?'GPS took too long (weak signal?). Try again outside, or paste your spot.':'Couldn\'t get GPS right now. Paste your spot from Google Maps instead.'}
+$('gpsBtn').addEventListener('click',()=>{if(gpsWatch!=null){navigator.geolocation.clearWatch(gpsWatch);gpsWatch=null;$('gpsBtn').textContent='🛰️ Use my phone\'s GPS';$('hereNote').textContent='GPS turned off. Your last spot is kept.';return}
+ if(!('geolocation' in navigator)){gpsErr({code:1});return}$('gpsBtn').textContent='🛰️ Finding you…';
+ try{gpsWatch=navigator.geolocation.watchPosition(gpsOk,gpsErr,{enableHighAccuracy:true,timeout:15000,maximumAge:30000})}catch(e){gpsErr({code:1})}});
+
+$('expBtn').addEventListener('click',async()=>{const t=Object.assign({},T,{chat:[]});const code='TRIPGUIDE1:'+JSON.stringify(t);
+ try{await navigator.clipboard.writeText(code);$('expBtn').textContent='Copied ✓ — paste it on the GPS website'}catch(e){$('expOut').hidden=false;$('expOut').value=code;$('expOut').select();$('expBtn').textContent='Copy blocked: select the text below and copy it'}
+ setTimeout(()=>$('expBtn').textContent='Copy trip (for GPS website)',4000)});
+$('impBtn').addEventListener('click',()=>{const raw=$('impIn').value.trim().replace(/^TRIPGUIDE1:/,'');let t;
+ try{t=JSON.parse(raw)}catch(e){$('impNote').textContent='That doesn\'t look like a trip code. Copy it again from the Claude version.';return}
+ const ok=t&&t.prof&&Array.isArray(t.days)&&t.days.length&&t.data&&Array.isArray(t.data.places)&&t.data.places.length&&Array.isArray(t.data.food);
+ if(!ok){$('impNote').textContent='The trip code is incomplete. Copy it again.';return}
+ t.id=String(t.id||('t'+Date.now().toString(36))).replace(/[^\w-]/g,'');t.plan=t.plan&&typeof t.plan==='object'?t.plan:{};t.check=t.check&&typeof t.check==='object'?t.check:{};t.custom=Array.isArray(t.custom)?t.custom.map(String):[];t.chat=[];t.created=Date.now();
+ ['safety','pack','gear','local','alerts','kids','weather','bingo'].forEach(k=>{if(!Array.isArray(t.data[k]))t.data[k]=[]});t.data.sun=t.data.sun||{};t.data.emer=t.data.emer||{};
+ T=t;day=0;saveT();$('impIn').value='';$('impNote').textContent='';openApp()});
+/* ---------- boot ---------- */
+renderTripSel();
+if(cur&&trips[cur]){T=trips[cur];openApp()}else{const ids=Object.keys(trips);if(ids.length){T=trips[ids[0]];openApp()}else openSetup(false)}
+}
+</script>
+</body>
+</html>
