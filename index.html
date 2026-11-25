@@ -481,9 +481,12 @@ const TOOLS=[
  {name:'set_pack_item',description:'Check or uncheck a packing item by its exact text; list is "pack" or "gear". Unknown text in "pack" is added as a custom item.',inputSchema:{type:'object',properties:{list:{type:'string',enum:['pack','gear']},item:{type:'string'},packed:{type:'boolean'}},required:['list','item','packed']},execute:({list,item,packed})=>{const known=PACK[list].some(([,a])=>a.includes(item))||S.custom.includes(item);if(!known&&list==='pack')S.custom.push(item);S.check[list+':'+item]=packed;save();renderPack();return{ok:true}}},
  {name:'open_tab',description:'Switch the app to a tab: today, map, plan, eat, kids, ask, safe, pack; optionally change the selected day.',inputSchema:{type:'object',properties:{tab:{type:'string'},day:{type:'string'}}},execute:({tab,day})=>{if(day&&di(day)>=0){S.day=day;save();renderAll()}if(tab&&TABS.some(t=>t[0]===tab))go(tab);return{ok:true}}}];
 const SYS='You are Claude inside a family\'s Yosemite trip app (stay Nov 25–27, 2026; they are in cabins; Nov 26 is Thanksgiving). Use the tools to read the app\'s data before answering about places, status, weather, food, safety or their plan; never invent hours or openings. Status was verified Nov 24, 2026; remind them winter conditions change and to check nps.gov/yose conditions or 209-372-0200 for roads and chains. Prioritize safety: chains, ice, daylight (sunset ~4:45pm), kids\' warmth. Keep answers short and phone-friendly: plain text, short lines, no markdown tables. If they ask you to plan or add things, use the plan tools and then say what you changed. Their question follows.\n\n';
-(async()=>{try{sample=await claude.use('sample')}catch(e){sample=null}if(!sample){$('askNote').textContent='Claude chat works when this app is opened in Claude (claude.ai or the Claude app). Everything else works anywhere.'}})();
+(async()=>{try{sample=await claude.use('sample')}catch(e){sample=null}if(!sample){$('askNote').textContent='On this website, questions open in the Claude app with your trip details filled in. (Inside the Claude version, Claude answers right here.)'}})();
 $('askForm').addEventListener('submit',async e=>{e.preventDefault();const q=$('askIn').value.trim();if(!q||busy)return;
- if(!sample){bubble('t','Claude isn\'t connected in this view. Open the app in Claude to chat.');return}
+ if(!sample){const url='https://claude.ai/new?q='+encodeURIComponent(ctxQ(q).slice(0,1800));bubble('u',q);$('askIn').value='';
+ const d=bubble('a','The chat here needs the Claude app, so I opened Claude with your question and trip details already filled in. If nothing opened, tap the link below.');
+ const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';a.className='btn pri';a.textContent='Open in Claude';a.style.marginTop='8px';d.appendChild(document.createElement('br'));d.appendChild(a);
+ try{const w=window.open(url,'_blank','noopener');if(!w)a.focus()}catch(e){}return}
  busy=true;$('askBtn').disabled=true;$('askIn').value='';bubble('u',q);S.chat.push({role:'user',content:q});
  const msgs=S.chat.slice(-12).map((m,i,a)=>({role:m.role,content:(i===0&&m.role==='user'?SYS:'')+m.content}));if(msgs[0].role!=='user')msgs.shift();
  const out=bubble('a','Thinking…');
@@ -510,6 +513,9 @@ function gpsErr(e){if(gpsWatch!=null){try{navigator.geolocation.clearWatch(gpsWa
 $('gpsBtn').addEventListener('click',()=>{if(gpsWatch!=null){navigator.geolocation.clearWatch(gpsWatch);gpsWatch=null;$('gpsBtn').textContent='🛰️ Use my phone\'s GPS';$('hereNote').textContent='GPS turned off. Your last spot is kept.';return}
  if(!('geolocation' in navigator)){gpsErr({code:1});return}$('gpsBtn').textContent='🛰️ Finding you…';
  try{gpsWatch=navigator.geolocation.watchPosition(gpsOk,gpsErr,{enableHighAccuracy:true,timeout:15000,maximumAge:30000})}catch(e){gpsErr({code:1})}});
+function ctxQ(q){const o=org(),L=(S.plan[S.day]||[]).map(x=>{const p=P.find(z=>z.id===x.id);return p?(x.time||'')+' '+p.n:''}).filter(Boolean);
+ const cl=P.filter(p=>stat(p)==='closed').map(p=>p.n).join('; ');
+ return `I'm on a family Yosemite trip, Nov 25–27, 2026, staying in cabins near ${base().n}. Today in the trip app: ${DAYS[di(S.day)].full}. Right now we're at ${S.here?S.here.n:'our cabin'} (approx ${o.lat.toFixed(3)}, ${o.lng.toFixed(3)}), local time ${new Date().toLocaleTimeString('en-US',{timeZone:'America/Los_Angeles',hour:'numeric',minute:'2-digit'})}.`+(L.length?` Our plan today: ${L.join(', ')}.`:'')+` Closed for the season: ${cl}.`+(S.prof?` Group: ${(S.prof.who||[]).join(', ')}; walking: ${S.prof.hike}; car: ${S.prof.car}.`:'')+`\n\nMy question: ${q}`}
 /* ---------- boot ---------- */
 function renderAll(){renderHere();renderDays();renderToday();renderMap();renderList();renderPlan();renderEat();renderKids();renderPack()}
 renderAll();
