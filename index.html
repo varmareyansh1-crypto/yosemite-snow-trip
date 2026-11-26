@@ -186,7 +186,7 @@ details summary{cursor:pointer;font-weight:600;min-height:40px;display:flex;alig
   <p class="small mut">Claude can see everything in this app: your answers, cabin area, the day, places and their status, the weather, your plan and pack list. It can add stops to your plan and tick items off.</p>
   <div class="card"><div class="chat" id="chat" aria-live="polite"></div>
   <div class="seg" id="sugg"></div>
-  <div class="row" id="camRow" style="margin-bottom:8px;position:relative"><label class="btn" for="camIn" id="camLbl">📷 Take or add a photo</label><input type="file" id="camIn" accept="image/*" capture="environment" style="position:absolute;left:0;top:0;width:1px;height:1px;opacity:0"><span id="camPrev" class="row"></span></div>
+  <div class="row" id="camRow" style="margin-bottom:8px"><span class="btn" style="position:relative;overflow:hidden" id="camLbl">📷 Camera<input type="file" id="camIn" accept="image/*" capture="environment" aria-label="Take a photo" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:40px"></span><span class="btn" style="position:relative;overflow:hidden">🖼️ Gallery<input type="file" id="galIn" accept="image/*" aria-label="Choose a photo" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:40px"></span><span id="camPrev" class="row"></span></div>
   <form id="askForm" class="row" style="flex-wrap:nowrap"><input id="askIn" placeholder="Ask anything about your trip…" autocomplete="off"><button class="btn pri" id="askBtn">Send</button></form>
   <p class="small mut" id="askNote"></p></div>
 </section>
@@ -485,11 +485,13 @@ const TOOLS=[
 const SYS='You are Claude inside a family\'s Yosemite trip app (stay Nov 25–27, 2026; they are in cabins; Nov 26 is Thanksgiving). Use the tools to read the app\'s data before answering about places, status, weather, food, safety or their plan; never invent hours or openings. Status was verified Nov 24, 2026; remind them winter conditions change and to check nps.gov/yose conditions or 209-372-0200 for roads and chains. Prioritize safety: chains, ice, daylight (sunset ~4:45pm), kids\' warmth. Keep answers short and phone-friendly: plain text, short lines, no markdown tables. If they ask you to plan or add things, use the plan tools and then say what you changed. If a photo is attached, the family just took it in the park (a sign, map board, trail, animal, track, plant, food menu, or a screenshot of this app): say what it shows, point out what matters for safety or their plans, and connect it to the app data when useful. Their question follows.\n\n';
 (async()=>{try{sample=await claude.use('sample')}catch(e){sample=null}if(!sample){$('camRow').style.display='none';$('askNote').textContent='On this website, questions open in the Claude app with your trip details filled in. (Inside the Claude version, Claude answers right here.)'}})();
 let photo=null,photoUrl=null;
-function clearPhoto(){photo=null;$('camPrev').innerHTML='';$('camIn').value='';$('camLbl').textContent='📷 Take or add a photo';$('askIn').placeholder='Ask anything about your trip…'}
-$('camIn').addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];if(!f)return;if(!/^image\//.test(f.type)){bubble('t','Please pick a photo.');return}
+function clearPhoto(){photo=null;$('camPrev').innerHTML='';$('camIn').value='';$('galIn').value='';$('askIn').placeholder='Ask anything about your trip…'}
+function setPhoto(f){if(!f)return;if(!/^image\//.test(f.type)){bubble('t','Please pick a photo.');return}
  photo=f;photoUrl=URL.createObjectURL(f);$('camPrev').innerHTML='';const im=document.createElement('img');im.src=photoUrl;im.alt='Photo to send';im.style.cssText='width:52px;height:52px;object-fit:cover;border-radius:8px';
  const x=document.createElement('button');x.type='button';x.className='btn';x.textContent='✕';x.setAttribute('aria-label','Remove photo');x.onclick=clearPhoto;$('camPrev').append(im,x);
- $('camLbl').textContent='📷 Change photo';$('askIn').placeholder='Ask about this photo (or just tap Send)';$('askIn').focus()});
+ $('askIn').placeholder='Ask about this photo (or just tap Send)';$('askIn').focus()}
+['camIn','galIn'].forEach(id=>$(id).addEventListener('change',e=>setPhoto(e.target.files&&e.target.files[0])));
+$('askIn').addEventListener('paste',e=>{const it=[...(e.clipboardData&&e.clipboardData.items||[])].find(i=>i.type.startsWith('image/'));if(it){e.preventDefault();setPhoto(it.getAsFile())}});
 $('askForm').addEventListener('submit',async e=>{e.preventDefault();let q=$('askIn').value.trim();if((!q&&!photo)||busy)return;
  if(!sample){if(!q)return;const url='https://claude.ai/new?q='+encodeURIComponent(ctxQ(q).slice(0,1800));bubble('u',q);$('askIn').value='';
  const d=bubble('a','The chat here needs the Claude app, so I opened Claude with your question and trip details already filled in. If nothing opened, tap the link below.');
